@@ -4,6 +4,7 @@ import { useState, Fragment, useEffect } from "react";
 import { useChat, useCompletion } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
+import { marked } from "marked";
 
 // ─── AI Elements ───────────────────────────────────────────────────────────────
 import {
@@ -359,23 +360,44 @@ function AgentChat({ tab }: { tab: TabConfig }) {
   const handlePdfExport = async (markdownText: string) => {
     setIsExportingPdf(true);
     try {
-      const res = await fetch("/api/export-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown: markdownText }),
+      const { marked } = await import("marked");
+      const htmlContent = await marked.parse(markdownText);
+      
+      // Dynamically import pdfmake and html-to-pdfmake
+      const pdfMakeModule = await import("pdfmake/build/pdfmake");
+      const pdfFontsModule = await import("pdfmake/build/vfs_fonts");
+      const htmlToPdfmake = (await import("html-to-pdfmake")).default || await import("html-to-pdfmake");
+      
+      const pdfMake = pdfMakeModule.default || pdfMakeModule;
+      const pdfFonts = pdfFontsModule.default || pdfFontsModule;
+      
+      (pdfMake as any).vfs = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
+
+      const pdfContent = (htmlToPdfmake as any)(htmlContent, {
+        defaultStyles: {
+          a: { color: '#0366d6' },
+          code: { background: '#f6f8fa' },
+          pre: { background: '#f6f8fa', margin: [0, 5, 0, 15] },
+          blockquote: { color: '#6a737d', margin: [10, 0, 10, 10] },
+          p: { margin: [0, 0, 0, 10] },
+          h1: { fontSize: 24, bold: true, margin: [0, 15, 0, 10] },
+          h2: { fontSize: 20, bold: true, margin: [0, 15, 0, 10] },
+          h3: { fontSize: 16, bold: true, margin: [0, 15, 0, 10] },
+          ul: { margin: [0, 0, 0, 10] },
+          ol: { margin: [0, 0, 0, 10] },
+        }
       });
-      
-      if (!res.ok) throw new Error("PDF generation failed");
-      
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${tab.label.toLowerCase()}-summary.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+
+      const documentDefinition = {
+        content: pdfContent,
+        defaultStyle: {
+          color: '#111111',
+          lineHeight: 1.4,
+        },
+        pageMargins: [ 40, 40, 40, 40 ] as [number, number, number, number]
+      };
+
+      pdfMake.createPdf(documentDefinition).download(`${tab.label.toLowerCase()}-summary.pdf`);
       
       setIsSummaryDialogOpen(false); // Close dialog on success
     } catch (err) {

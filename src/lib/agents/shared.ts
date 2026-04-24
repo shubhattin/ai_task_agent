@@ -8,7 +8,7 @@ import { openai } from "@ai-sdk/openai";
 
 // ─── Model ──────────────────────────────────────────────────────────────────
 /** GPT-5.4 (medium reasoning) — shared across all agents */
-export const AGENT_MODEL = openai("gpt-5.4");
+export const AGENT_MODEL = openai("gpt-5.4-mini");
 
 // ─── Tools ──────────────────────────────────────────────────────────────────
 /**
@@ -52,7 +52,7 @@ function toStreamResponse(result: {
 export async function handleAgentRequest(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  agent: ToolLoopAgent<never, any, any>
+  agent: ToolLoopAgent<never, any, any>,
 ): Promise<Response> {
   try {
     const { messages }: { messages: UIMessage[] } = await req.json();
@@ -62,10 +62,9 @@ export async function handleAgentRequest(
     return toStreamResponse(result);
   } catch (error) {
     console.error("[agent-route] Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Agent request failed" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Agent request failed" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
-

@@ -377,14 +377,20 @@ function AgentChat({ tab }: { tab: TabConfig }) {
         defaultStyles: {
           a: { color: '#0366d6' },
           code: { background: '#f6f8fa' },
-          pre: { background: '#f6f8fa', margin: [0, 5, 0, 15] },
-          blockquote: { color: '#6a737d', margin: [10, 0, 10, 10] },
-          p: { margin: [0, 0, 0, 10] },
-          h1: { fontSize: 24, bold: true, margin: [0, 15, 0, 10] },
-          h2: { fontSize: 20, bold: true, margin: [0, 15, 0, 10] },
-          h3: { fontSize: 16, bold: true, margin: [0, 15, 0, 10] },
-          ul: { margin: [0, 0, 0, 10] },
-          ol: { margin: [0, 0, 0, 10] },
+          pre: { background: '#f6f8fa', margin: [0, 10, 0, 15] },
+          blockquote: { color: '#6a737d', margin: [15, 5, 0, 15] }, // Left indent
+          p: { margin: [0, 0, 0, 12] },
+          h1: { fontSize: 26, bold: true, margin: [0, 20, 0, 10] },
+          h2: { fontSize: 22, bold: true, margin: [0, 16, 0, 8] },
+          h3: { fontSize: 18, bold: true, margin: [0, 14, 0, 8] },
+          h4: { fontSize: 14, bold: true, margin: [0, 12, 0, 6] },
+          h5: { fontSize: 12, bold: true, margin: [0, 10, 0, 6] },
+          h6: { fontSize: 12, bold: true, margin: [0, 10, 0, 6], color: '#6a737d' },
+          ul: { margin: [10, 0, 0, 12] },
+          ol: { margin: [10, 0, 0, 12] },
+          li: { margin: [0, 0, 0, 4] },
+          strong: { bold: true },
+          em: { italics: true },
         }
       });
 

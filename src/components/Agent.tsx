@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, Fragment } from "react";
-import { useChat } from "@ai-sdk/react";
+import { useState, Fragment, useEffect } from "react";
+import { useChat, useCompletion } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
 
@@ -60,6 +60,13 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
@@ -72,6 +79,7 @@ import {
   GlobeIcon,
   BrainIcon,
   SparklesIcon,
+  DownloadIcon,
 } from "lucide-react";
 
 // ─── Tab config ────────────────────────────────────────────────────────────────
@@ -329,22 +337,75 @@ function MessageParts({
 
 function AgentChat({ tab }: { tab: TabConfig }) {
   const [text, setText] = useState("");
+  const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const { messages, sendMessage, status, regenerate } = useChat({
     transport: new DefaultChatTransport({ api: tab.apiPath }),
   });
+
+  const {
+    completion: summaryText,
+    complete: startSummary,
+    isLoading: isSummarizing,
+    setCompletion: setSummaryText,
+  } = useCompletion({
+    api: "/api/summarize",
+    streamProtocol: "text",
+  });
+
+
+
+  const handlePdfExport = async (markdownText: string) => {
+    setIsExportingPdf(true);
+    try {
+      const res = await fetch("/api/export-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markdown: markdownText }),
+      });
+      
+      if (!res.ok) throw new Error("PDF generation failed");
+      
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${tab.label.toLowerCase()}-summary.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setIsSummaryDialogOpen(false); // Close dialog on success
+    } catch (err) {
+      console.error(err);
+      alert("Failed to export PDF");
+    } finally {
+      setIsExportingPdf(false);
+      setSummaryText("");
+    }
+  };
 
   const isStreaming = status === "streaming";
   const isSubmitted = status === "submitted";
 
   const handleSubmit = (msg: PromptInputMessage) => {
     const hasText = Boolean(msg.text?.trim());
-    const hasFiles = Boolean(msg.files?.length);
+    const hasFiles = msg.files && msg.files.length > 0;
     if (!hasText && !hasFiles) return;
-    sendMessage({
-      text: msg.text || "Sent with attachments",
-      files: msg.files,
-    });
+
+    if (hasText) {
+      sendMessage({
+        text: msg.text,
+        ...(hasFiles ? { files: msg.files } : {}),
+      });
+    } else if (hasFiles) {
+      sendMessage({
+        text: "Please analyse the attached file(s).",
+        files: msg.files,
+      });
+    }
     setText("");
   };
 
@@ -420,6 +481,27 @@ function AgentChat({ tab }: { tab: TabConfig }) {
                       >
                         <CopyIcon className="size-3" />
                       </MessageAction>
+                      <MessageAction
+                        onClick={() => {
+                          const txt = message.parts
+                            .filter((p) => p.type === "text")
+                            .map((p) => p.text)
+                            .join("\n\n");
+                          
+                          const blob = new Blob([txt], { type: "text/markdown" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `report-${new Date().toISOString().split("T")[0]}.md`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                        }}
+                        label="Export Markdown"
+                      >
+                        <DownloadIcon className="size-3" />
+                      </MessageAction>
                     </MessageActions>
                   )}
               </Fragment>
@@ -435,7 +517,7 @@ function AgentChat({ tab }: { tab: TabConfig }) {
         <PromptInput
           onSubmit={handleSubmit}
           className="w-full"
-          accept=".csv,.xlsx,.xls,.json,.txt,.pdf,.png,.jpg,.jpeg,.gif,.webp"
+          accept="image/*,text/*,application/json,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
           multiple
           globalDrop
         >
@@ -473,6 +555,30 @@ function AgentChat({ tab }: { tab: TabConfig }) {
                 <GlobeIcon size={14} />
                 <span className="text-xs">Search</span>
               </PromptInputButton>
+
+              {/* PDF Summary Export */}
+              {messages.length > 0 && (
+                <PromptInputButton
+                  onClick={async () => {
+                    setIsSummaryDialogOpen(true);
+                    setSummaryText("");
+                    try {
+                      const completionText = await startSummary("", { body: { messages } });
+                      if (completionText) {
+                        await handlePdfExport(completionText);
+                      }
+                    } catch (err) {
+                      console.error("Summary failed:", err);
+                    }
+                  }}
+                  tooltip={{ content: "Export comprehensive summary to PDF" }}
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <DownloadIcon size={14} />
+                  <span className="text-xs">Get Summary PDF</span>
+                </PromptInputButton>
+              )}
             </PromptInputTools>
 
             <PromptInputSubmit
@@ -482,6 +588,40 @@ function AgentChat({ tab }: { tab: TabConfig }) {
           </PromptInputFooter>
         </PromptInput>
       </div>
+
+      <Dialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] gap-0 p-0 border-border/60 bg-background/95 backdrop-blur shadow-2xl">
+          <DialogHeader className="p-4 border-b border-border/40 bg-muted/20">
+            <DialogTitle className="flex items-center gap-2">
+              <DownloadIcon className="size-4 text-primary" />
+              Generating PDF Summary...
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <ScrollArea className="h-[300px] w-full rounded-md border border-border/40 bg-card/30 p-4">
+              <div className="prose prose-sm dark:prose-invert prose-p:leading-relaxed max-w-none">
+                {summaryText ? (
+                  <MessageResponse>{summaryText}</MessageResponse>
+                ) : (
+                  <p className="text-muted-foreground italic">
+                    Analyzing conversation history...
+                  </p>
+                )}
+                {isSummarizing && (
+                  <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
+                    <Spinner /> Drafting markdown...
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+          {isExportingPdf && (
+            <div className="p-4 border-t border-border/40 bg-muted/20 flex items-center justify-center gap-2 text-sm font-medium text-primary">
+              <Spinner /> Converting to Light-Mode PDF...
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

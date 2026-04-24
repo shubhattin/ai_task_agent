@@ -2,7 +2,8 @@
  * Shared configuration and utilities for all agents.
  * Import from here instead of duplicating across agent files.
  */
-import { stepCountIs } from "ai";
+import { stepCountIs, convertToModelMessages } from "ai";
+import type { UIMessage, ToolLoopAgent } from "ai";
 import { openai } from "@ai-sdk/openai";
 
 // ─── Model ──────────────────────────────────────────────────────────────────
@@ -20,13 +21,12 @@ export const webSearchTool = openai.tools.webSearch({});
 /** Max 10 tool-call steps per agent run (prevents runaway loops) */
 export const AGENT_STOP_WHEN = stepCountIs(10);
 
+// ─── Route config ────────────────────────────────────────────────────────────
+/** Max execution time per request */
+export const maxDuration = 60;
+
 // ─── Stream helper ───────────────────────────────────────────────────────────
-/**
- * Converts a StreamTextResult into a UIMessageStreamResponse with
- * reasoning traces and source URLs enabled.
- * All route handlers call this so the options stay consistent.
- */
-export function toStreamResponse(result: {
+function toStreamResponse(result: {
   toUIMessageStreamResponse: (opts?: {
     sendReasoning?: boolean;
     sendSources?: boolean;
@@ -37,3 +37,35 @@ export function toStreamResponse(result: {
     sendSources: true,
   });
 }
+
+// ─── Shared route handler ────────────────────────────────────────────────────
+/**
+ * Shared POST handler for all agent routes.
+ * Handles: JSON body parsing → convertToModelMessages → agent.stream → response.
+ *
+ * Each route.ts just needs:
+ *   import { handleAgentRequest } from "@/lib/agents/shared";
+ *   import { researchAgent } from "@/lib/agents/agents";
+ *   export { maxDuration } from "@/lib/agents/shared";
+ *   export const POST = (req: Request) => handleAgentRequest(req, researchAgent);
+ */
+export async function handleAgentRequest(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  agent: ToolLoopAgent<never, any, any>
+): Promise<Response> {
+  try {
+    const { messages }: { messages: UIMessage[] } = await req.json();
+    const result = await agent.stream({
+      messages: await convertToModelMessages(messages),
+    });
+    return toStreamResponse(result);
+  } catch (error) {
+    console.error("[agent-route] Error:", error);
+    return new Response(
+      JSON.stringify({ error: "Agent request failed" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
+

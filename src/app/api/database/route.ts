@@ -1,13 +1,6 @@
-import { convertToModelMessages, UIMessage } from "ai";
+import { handleAgentRequest, maxDuration } from "@/lib/agents/shared";
 import { databaseAgent } from "@/lib/agents/agents";
-import { toStreamResponse } from "@/lib/agents/shared";
 
-export const maxDuration = 60;
+export { maxDuration };
 
-export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
-  const result = await databaseAgent.stream({
-    messages: await convertToModelMessages(messages),
-  });
-  return toStreamResponse(result);
-}
+export const POST = (req: Request) => handleAgentRequest(req, databaseAgent);

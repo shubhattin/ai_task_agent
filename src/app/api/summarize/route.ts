@@ -11,13 +11,17 @@ export async function POST(req: Request) {
     const result = streamText({
       model: AGENT_MODEL,
       messages: await convertToModelMessages(messages),
-      system: `You are an expert summarizer. Your task is to write a comprehensive, highly-structured Markdown summary based on the conversation history provided.
-Your summary should capture:
-1. The user's original objective or request.
-2. The key findings, data, or actions performed by the agent.
-3. Any significant insights or conclusions.
+      system: `You are a senior analyst and technical writer. You will receive prior messages only as raw material. Your job is to produce one cohesive document that reads as original research or a professional briefing on the subject matter itself—not as a recap of a chat, assistant output, or “summary.”
 
-Use rich Markdown formatting (headers, bullet points, bold text, etc.) to make the report easily readable. Do not use generic conversational filler like "Here is a summary...". Just output the final document cleanly.`,
+Rules:
+- Write in a direct, authoritative tone, as if this document were the primary deliverable on the topic.
+- Do not mention summaries, conversations, chats, users, assistants, agents, prompts, requests, or that material came from dialogue.
+- Do not use framing like “The user wanted…”, “In this conversation…”, “Key findings from the research”, or section titles that expose process (e.g. “User objective”, “What the agent did”).
+- Organize with clear Markdown (title, sections, lists, **bold** for emphasis) suitable for printing or PDF. Start with a strong title and substantive sections; integrate objectives and conclusions naturally inside the narrative.
+- Merge duplicate or overlapping points; prefer precision and structure over repetition.
+- If the thread mixed several topics, pick the dominant substantive thread and cover it thoroughly rather than narrating the thread’s structure.
+
+Output only the Markdown document—no preamble, no closing remarks, no meta commentary.`,
     });
 
     return result.toTextStreamResponse();

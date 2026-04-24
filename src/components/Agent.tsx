@@ -146,7 +146,17 @@ const TABS: TabConfig[] = [
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-type WebSearchOutput = {
+/**
+ * OpenAI provider `webSearch` tool: `input` is always `{}` — the model’s query and
+ * citations are returned in `output` (see @ai-sdk/openai web-search tool schema).
+ */
+type WebSearchToolOutput = {
+  action?:
+    | { type: "search"; query?: string }
+    | { type: "openPage"; url?: string | null }
+    | { type: "findInPage"; url?: string | null; pattern?: string | null };
+  sources?: Array<{ type: "url"; url: string } | { type: "api"; name: string }>;
+  /** Legacy / alternate shape */
   results?: Array<{ title?: string; url?: string }>;
 };
 
@@ -156,6 +166,50 @@ type ToolPartLike = {
   input?: unknown;
   output?: unknown;
 };
+
+function getWebSearchStepLabel(tool: ToolPartLike): string {
+  const o = tool.output as WebSearchToolOutput | undefined;
+  const action = o?.action;
+
+  if (action?.type === "search") {
+    const q = action.query?.trim();
+    if (q) return `Searched "${q}"`;
+  }
+  if (action?.type === "openPage") {
+    const raw = action.url?.trim();
+    if (raw) {
+      try {
+        const host = new URL(raw).hostname.replace(/^www\./, "");
+        return `Opened ${host}`;
+      } catch {
+        return "Opened page";
+      }
+    }
+  }
+  if (action?.type === "findInPage") {
+    const hint = action.pattern?.trim() || action.url?.trim();
+    if (hint) return `Find in page: ${hint}`;
+    return "Find in page";
+  }
+
+  if (tool.state === "output-available" || tool.state === "output-error") {
+    return "Web search";
+  }
+  return "Searching…";
+}
+
+function getWebSearchResultUrls(output: unknown): string[] {
+  const o = output as WebSearchToolOutput | undefined;
+  const fromSources = (o?.sources ?? [])
+    .filter(
+      (s): s is { type: "url"; url: string } =>
+        s.type === "url" && typeof s.url === "string",
+    )
+    .map((s) => s.url);
+  if (fromSources.length > 0) return fromSources;
+  const legacy = o?.results ?? [];
+  return legacy.map((r) => r.url).filter(Boolean) as string[];
+}
 
 // ─── Sources strip (for source-url parts from webSearch) ───────────────────────
 
@@ -202,14 +256,82 @@ function PromptAttachments() {
 
 // ─── Message Parts renderer ────────────────────────────────────────────────────
 
+function shouldSkipMessagePart(p: UIMessage["parts"][number]): boolean {
+  return (
+    p.type === "source-url" ||
+    p.type === "step-start" ||
+    p.type === "file"
+  );
+}
+
+function renderToolStepsForChain(
+  messageId: string,
+  toolParts: UIMessage["parts"],
+  keyPrefix: string,
+) {
+  return toolParts.map((part, i) => {
+    if (part.type === "tool-webSearch") {
+      const tool = part as ToolPartLike;
+      const done =
+        tool.state === "output-available" || tool.state === "output-error";
+      const urls = getWebSearchResultUrls(tool.output);
+
+      return (
+        <ChainOfThoughtStep
+          key={`${messageId}-${keyPrefix}-${i}`}
+          icon={GlobeIcon}
+          label={getWebSearchStepLabel(tool)}
+          status={done ? "complete" : "active"}
+        >
+          {urls.length > 0 && (
+            <ChainOfThoughtSearchResults>
+              {urls.slice(0, 6).map((url) => {
+                let host = url;
+                try {
+                  host = new URL(url).hostname.replace(/^www\./, "");
+                } catch {
+                  /* keep raw */
+                }
+                return (
+                  <ChainOfThoughtSearchResult key={url}>
+                    {host}
+                  </ChainOfThoughtSearchResult>
+                );
+              })}
+            </ChainOfThoughtSearchResults>
+          )}
+        </ChainOfThoughtStep>
+      );
+    }
+
+    if (part.type.startsWith("tool-")) {
+      const tool = part as ToolPartLike;
+      const done =
+        tool.state === "output-available" || tool.state === "output-error";
+      const name = part.type
+        .replace("tool-", "")
+        .replace(/([A-Z])/g, " $1")
+        .replace(/-/g, " ")
+        .trim();
+      return (
+        <ChainOfThoughtStep
+          key={`${messageId}-${keyPrefix}-${i}`}
+          icon={SparklesIcon}
+          label={name}
+          status={done ? "complete" : "active"}
+        />
+      );
+    }
+
+    return null;
+  });
+}
+
 /**
- * Renders all parts of a message using the appropriate ai-elements:
+ * Renders message parts in **stream order** (required for ToolLoopAgent: reasoning → tools →
+ * reasoning → text interleaves). Uses ai-elements Reasoning + ChainOfThought + MessageResponse.
  *
- *  • reasoning       → Reasoning collapsible (auto-open while streaming)
- *  • tool-webSearch   → ChainOfThought step with query + domain badges
- *  • other tool-*     → ChainOfThought generic step
- *  • source-url       → handled separately by SourceStrip
- *  • text             → MessageResponse (markdown)
+ * Skips: source-url (Sources strip), step-start, file (attachments handled above for users).
  */
 function MessageParts({
   message,
@@ -220,118 +342,107 @@ function MessageParts({
   isLastMessage: boolean;
   isStreaming: boolean;
 }) {
-  // Split parts by type
-  const textParts = message.parts.filter((p) => p.type === "text");
-  const reasoningParts = message.parts.filter((p) => p.type === "reasoning");
-  const toolParts = message.parts.filter((p) => p.type.startsWith("tool-"));
-  const hasThinking = toolParts.length > 0;
+  const parts = message.parts;
+  const lastIdx = parts.length - 1;
+  const lastPart = parts.at(-1);
 
-  // Reasoning
-  const hasReasoning = reasoningParts.length > 0;
-  const reasoningText = reasoningParts.map((p) => p.text).join("\n\n");
-  const lastPart = message.parts.at(-1);
-  const isReasoningStreaming =
-    isLastMessage && isStreaming && lastPart?.type === "reasoning";
+  const out: React.ReactNode[] = [];
+  let i = 0;
 
-  // Is the agent still in its tool-call loop?
-  const stillRunning =
-    isLastMessage && isStreaming && lastPart?.type !== "text";
+  while (i < parts.length) {
+    const p = parts[i];
 
-  return (
-    <>
-      {/* ── Reasoning trace (collapsible, Reasoning component) ── */}
-      {hasReasoning && (
-        <Reasoning className="w-full" isStreaming={isReasoningStreaming}>
-          <ReasoningTrigger />
-          <ReasoningContent>{reasoningText}</ReasoningContent>
-        </Reasoning>
-      )}
+    if (shouldSkipMessagePart(p)) {
+      i += 1;
+      continue;
+    }
 
-      {/* ── Chain-of-thought for tool steps ── */}
-      {hasThinking && (
-        <ChainOfThought defaultOpen={stillRunning} className="w-full mb-2">
+    if (p.type === "reasoning") {
+      const start = i;
+      while (i < parts.length && parts[i].type === "reasoning") {
+        i += 1;
+      }
+      const slice = parts.slice(start, i);
+      const reasoningText = slice
+        .filter((r): r is Extract<typeof r, { type: "reasoning" }> => r.type === "reasoning")
+        .map((r) => r.text)
+        .join("\n\n");
+      const groupEnd = i - 1;
+      const touchesTail = groupEnd === lastIdx;
+      const tailReasoning =
+        touchesTail && lastPart?.type === "reasoning" ? lastPart : undefined;
+      const isReasoningStreaming =
+        isLastMessage &&
+        isStreaming &&
+        tailReasoning != null &&
+        tailReasoning.state !== "done";
+      const showReasoning =
+        slice.length > 0 &&
+        (reasoningText.length > 0 || isReasoningStreaming);
+
+      if (showReasoning) {
+        out.push(
+          <Reasoning
+            key={`${message.id}-reason-${start}`}
+            className="w-full"
+            isStreaming={isReasoningStreaming}
+            {...(isReasoningStreaming ? { defaultOpen: true } : {})}
+          >
+            <ReasoningTrigger />
+            <ReasoningContent>{reasoningText}</ReasoningContent>
+          </Reasoning>,
+        );
+      }
+      continue;
+    }
+
+    if (p.type.startsWith("tool-")) {
+      const start = i;
+      while (
+        i < parts.length &&
+        typeof parts[i].type === "string" &&
+        parts[i].type.startsWith("tool-")
+      ) {
+        i += 1;
+      }
+      const toolSlice = parts.slice(start, i);
+      const groupEnd = i - 1;
+      const groupAtTail = groupEnd === lastIdx;
+      const stillRunning =
+        Boolean(isLastMessage && isStreaming && groupAtTail) &&
+        lastPart?.type !== "text";
+
+      out.push(
+        <ChainOfThought
+          key={`${message.id}-cot-${start}`}
+          defaultOpen={stillRunning}
+          className="w-full mb-2"
+        >
           <ChainOfThoughtHeader>
             {stillRunning ? "Working…" : "Steps taken"}
           </ChainOfThoughtHeader>
           <ChainOfThoughtContent>
-            {toolParts.map((part, i) => {
-              // ── Web Search step ────────────────────────────────────────
-              if (part.type === "tool-webSearch") {
-                const tool = part as ToolPartLike;
-                const input = tool.input as { query?: string } | undefined;
-                const output = tool.output as WebSearchOutput | undefined;
-                const query = input?.query ?? "searching…";
-                const done =
-                  tool.state === "output-available" ||
-                  tool.state === "output-error";
-                const urls = (output?.results ?? [])
-                  .map((r) => r.url)
-                  .filter(Boolean) as string[];
-
-                return (
-                  <ChainOfThoughtStep
-                    key={`${message.id}-s-${i}`}
-                    icon={GlobeIcon}
-                    label={`Searched "${query}"`}
-                    status={done ? "complete" : "active"}
-                  >
-                    {urls.length > 0 && (
-                      <ChainOfThoughtSearchResults>
-                        {urls.slice(0, 6).map((url) => {
-                          let host = url;
-                          try {
-                            host = new URL(url).hostname.replace(
-                              /^www\./,
-                              ""
-                            );
-                          } catch {}
-                          return (
-                            <ChainOfThoughtSearchResult key={url}>
-                              {host}
-                            </ChainOfThoughtSearchResult>
-                          );
-                        })}
-                      </ChainOfThoughtSearchResults>
-                    )}
-                  </ChainOfThoughtStep>
-                );
-              }
-
-              // ── Any other tool step ────────────────────────────────────
-              if (part.type.startsWith("tool-")) {
-                const tool = part as ToolPartLike;
-                const done =
-                  tool.state === "output-available" ||
-                  tool.state === "output-error";
-                const name = part.type
-                  .replace("tool-", "")
-                  .replace(/([A-Z])/g, " $1")
-                  .replace(/-/g, " ")
-                  .trim();
-                return (
-                  <ChainOfThoughtStep
-                    key={`${message.id}-t-${i}`}
-                    icon={SparklesIcon}
-                    label={name}
-                    status={done ? "complete" : "active"}
-                  />
-                );
-              }
-
-              return null;
-            })}
+            {renderToolStepsForChain(message.id, toolSlice, `cot-${start}`)}
           </ChainOfThoughtContent>
-        </ChainOfThought>
-      )}
+        </ChainOfThought>,
+      );
+      continue;
+    }
 
-      {/* ── Final text response ── */}
-      {textParts.map((part, i) => (
-        <MessageResponse key={`${message.id}-text-${i}`}>
-          {part.text}
-        </MessageResponse>
-      ))}
-    </>
-  );
+    if (p.type === "text") {
+      out.push(
+        <MessageResponse key={`${message.id}-txt-${i}`}>
+          {p.text}
+        </MessageResponse>,
+      );
+      i += 1;
+      continue;
+    }
+
+    i += 1;
+  }
+
+  return <>{out}</>;
 }
 
 // ─── Single Agent Chat Panel ───────────────────────────────────────────────────
@@ -355,56 +466,65 @@ function AgentChat({ tab }: { tab: TabConfig }) {
     streamProtocol: "text",
   });
 
-
-
   const handlePdfExport = async (markdownText: string) => {
     setIsExportingPdf(true);
     try {
       const { marked } = await import("marked");
       const htmlContent = await marked.parse(markdownText);
-      
+
       // Dynamically import pdfmake and html-to-pdfmake
       const pdfMakeModule = await import("pdfmake/build/pdfmake");
       const pdfFontsModule = await import("pdfmake/build/vfs_fonts");
-      const htmlToPdfmake = (await import("html-to-pdfmake")).default || await import("html-to-pdfmake");
-      
+      const htmlToPdfmake =
+        (await import("html-to-pdfmake")).default ||
+        (await import("html-to-pdfmake"));
+
       const pdfMake = pdfMakeModule.default || pdfMakeModule;
       const pdfFonts = pdfFontsModule.default || pdfFontsModule;
-      
-      (pdfMake as any).vfs = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
+
+      (pdfMake as any).vfs = (pdfFonts as any).pdfMake
+        ? (pdfFonts as any).pdfMake.vfs
+        : (pdfFonts as any).vfs;
 
       const pdfContent = (htmlToPdfmake as any)(htmlContent, {
         defaultStyles: {
-          a: { color: '#0366d6' },
-          code: { background: '#f6f8fa' },
-          pre: { background: '#f6f8fa', margin: [0, 10, 0, 15] },
-          blockquote: { color: '#6a737d', margin: [15, 5, 0, 15] }, // Left indent
+          a: { color: "#0366d6" },
+          code: { background: "#f6f8fa" },
+          pre: { background: "#f6f8fa", margin: [0, 10, 0, 15] },
+          blockquote: { color: "#6a737d", margin: [15, 5, 0, 15] }, // Left indent
           p: { margin: [0, 0, 0, 12] },
           h1: { fontSize: 26, bold: true, margin: [0, 20, 0, 10] },
           h2: { fontSize: 22, bold: true, margin: [0, 16, 0, 8] },
           h3: { fontSize: 18, bold: true, margin: [0, 14, 0, 8] },
           h4: { fontSize: 14, bold: true, margin: [0, 12, 0, 6] },
           h5: { fontSize: 12, bold: true, margin: [0, 10, 0, 6] },
-          h6: { fontSize: 12, bold: true, margin: [0, 10, 0, 6], color: '#6a737d' },
+          h6: {
+            fontSize: 12,
+            bold: true,
+            margin: [0, 10, 0, 6],
+            color: "#6a737d",
+          },
           ul: { margin: [10, 0, 0, 12] },
           ol: { margin: [10, 0, 0, 12] },
           li: { margin: [0, 0, 0, 4] },
           strong: { bold: true },
           em: { italics: true },
-        }
+        },
       });
 
       const documentDefinition = {
         content: pdfContent,
         defaultStyle: {
-          color: '#111111',
+          color: "#111111",
           lineHeight: 1.4,
         },
-        pageMargins: [ 40, 40, 40, 40 ] as [number, number, number, number]
+        pageMargins: [40, 40, 40, 40] as [number, number, number, number],
       };
 
-      pdfMake.createPdf(documentDefinition).download(`${tab.label.toLowerCase()}-summary.pdf`);
-      
+      pdfMake
+        .createPdf(documentDefinition)
+        .download(`${tab.label.toLowerCase()}-summary.pdf`);
+
       setIsSummaryDialogOpen(false); // Close dialog on success
     } catch (err) {
       console.error(err);
@@ -459,24 +579,25 @@ function AgentChat({ tab }: { tab: TabConfig }) {
                 <Message from={message.role}>
                   <MessageContent>
                     {/* Render user file attachments */}
-                    {message.role === "user" && (() => {
-                      const fileParts = message.parts.filter(
-                        (p) => p.type === "file"
-                      );
-                      if (fileParts.length === 0) return null;
-                      return (
-                        <Attachments variant="inline" className="mb-2">
-                          {fileParts.map((part, fi) => (
-                            <Attachment
-                              key={`${message.id}-f-${fi}`}
-                              data={{ ...part, id: `${message.id}-f-${fi}` }}
-                            >
-                              <AttachmentPreview />
-                            </Attachment>
-                          ))}
-                        </Attachments>
-                      );
-                    })()}
+                    {message.role === "user" &&
+                      (() => {
+                        const fileParts = message.parts.filter(
+                          (p) => p.type === "file",
+                        );
+                        if (fileParts.length === 0) return null;
+                        return (
+                          <Attachments variant="inline" className="mb-2">
+                            {fileParts.map((part, fi) => (
+                              <Attachment
+                                key={`${message.id}-f-${fi}`}
+                                data={{ ...part, id: `${message.id}-f-${fi}` }}
+                              >
+                                <AttachmentPreview />
+                              </Attachment>
+                            ))}
+                          </Attachments>
+                        );
+                      })()}
 
                     <MessageParts
                       message={message}
@@ -491,10 +612,7 @@ function AgentChat({ tab }: { tab: TabConfig }) {
                   idx === messages.length - 1 &&
                   !isStreaming && (
                     <MessageActions>
-                      <MessageAction
-                        onClick={() => regenerate()}
-                        label="Retry"
-                      >
+                      <MessageAction onClick={() => regenerate()} label="Retry">
                         <RefreshCcwIcon className="size-3" />
                       </MessageAction>
                       <MessageAction
@@ -515,8 +633,10 @@ function AgentChat({ tab }: { tab: TabConfig }) {
                             .filter((p) => p.type === "text")
                             .map((p) => p.text)
                             .join("\n\n");
-                          
-                          const blob = new Blob([txt], { type: "text/markdown" });
+
+                          const blob = new Blob([txt], {
+                            type: "text/markdown",
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement("a");
                           a.href = url;
@@ -591,7 +711,9 @@ function AgentChat({ tab }: { tab: TabConfig }) {
                     setIsSummaryDialogOpen(true);
                     setSummaryText("");
                     try {
-                      const completionText = await startSummary("", { body: { messages } });
+                      const completionText = await startSummary("", {
+                        body: { messages },
+                      });
                       if (completionText) {
                         await handlePdfExport(completionText);
                       }
@@ -725,15 +847,10 @@ export default function Agent() {
       <div className="flex-1 min-w-0 flex flex-col p-4 gap-3">
         {/* Tab header */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={activeConfig.accentColor}>
-            {activeConfig.icon}
-          </span>
+          <span className={activeConfig.accentColor}>{activeConfig.icon}</span>
           <h3 className="text-sm font-semibold text-foreground">
             {activeConfig.label} Agent
           </h3>
-          <span className="ml-auto text-xs text-muted-foreground/60 bg-muted/40 px-2 py-0.5 rounded-full">
-            GPT-5.4 · Medium Reasoning
-          </span>
         </div>
 
         {/* Agent chat — key forces remount when tab changes */}

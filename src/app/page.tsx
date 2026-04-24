@@ -83,28 +83,37 @@ export default function Home() {
         {/* ── Hero ─────────────────────────────────────────────────────────── */}
         <section className="text-center flex flex-col items-center gap-6">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/60 bg-muted/30 text-xs text-muted-foreground backdrop-blur-sm">
+          {/* <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/60 bg-muted/30 text-xs text-muted-foreground backdrop-blur-sm">
             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Powered by GPT-5.4 &middot; Vercel AI SDK &middot; Multi-Agent
-          </div>
+          </div> */}
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight max-w-4xl">
-            Automate Complex Tasks with{" "}
-            <GradientText>AI Agents</GradientText>
+            Automate Complex Tasks with <GradientText>AI Agents</GradientText>
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-            AutoAgent accepts any complex instruction, decomposes it into logical
-            steps, and executes each one reliably — with full observability over
-            reasoning and tool calls.
+            AutoAgent accepts any complex instruction, decomposes it into
+            logical steps, and executes each one reliably — with full
+            observability over reasoning and tool calls.
           </p>
 
           {/* Stat chips */}
           <div className="flex flex-wrap justify-center gap-3 mt-2">
             {[
-              { label: "Research Agent", color: "text-violet-400 border-violet-500/30 bg-violet-500/10" },
-              { label: "Data Processing", color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" },
-              { label: "Database Agent", color: "text-sky-400 border-sky-500/30 bg-sky-500/10" },
+              {
+                label: "Research Agent",
+                color: "text-violet-400 border-violet-500/30 bg-violet-500/10",
+              },
+              {
+                label: "Data Processing",
+                color:
+                  "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
+              },
+              {
+                label: "Database Agent",
+                color: "text-sky-400 border-sky-500/30 bg-sky-500/10",
+              },
             ].map(({ label, color }) => (
               <span
                 key={label}
@@ -138,7 +147,10 @@ export default function Home() {
         </section>
 
         {/* ── Features grid ────────────────────────────────────────────────── */}
-        <section aria-labelledby="features-heading" className="flex flex-col gap-8">
+        <section
+          aria-labelledby="features-heading"
+          className="flex flex-col gap-8"
+        >
           <div className="text-center">
             <h2
               id="features-heading"
@@ -176,7 +188,10 @@ export default function Home() {
         </section>
 
         {/* ── How it works ─────────────────────────────────────────────────── */}
-        <section aria-labelledby="how-heading" className="flex flex-col gap-8 pb-8">
+        <section
+          aria-labelledby="how-heading"
+          className="flex flex-col gap-8 pb-8"
+        >
           <div className="text-center">
             <h2
               id="how-heading"
@@ -193,7 +208,8 @@ export default function Home() {
                 title: "Describe your task",
                 description:
                   "Give the agent any complex instruction in plain language.",
-                color: "from-violet-500/20 to-violet-500/5 border-violet-500/30",
+                color:
+                  "from-violet-500/20 to-violet-500/5 border-violet-500/30",
                 accent: "text-violet-400",
               },
               {
@@ -209,7 +225,8 @@ export default function Home() {
                 title: "See live results",
                 description:
                   "Watch reasoning, tool calls, and final output stream in real-time.",
-                color: "from-emerald-500/20 to-emerald-500/5 border-emerald-500/30",
+                color:
+                  "from-emerald-500/20 to-emerald-500/5 border-emerald-500/30",
                 accent: "text-emerald-400",
               },
             ].map(({ step, title, description, color, accent }) => (

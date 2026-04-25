@@ -6,6 +6,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { prepareAssistantMarkdownForMath } from "@/lib/markdown-math-fixer";
 import { cn } from "@/lib/utils";
 import { streamdownPlugins } from "@/lib/streamdown-plugins";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
@@ -211,7 +212,9 @@ export const ReasoningContent = memo(
       )}
       {...props}
     >
-      <Streamdown plugins={streamdownPlugins}>{children}</Streamdown>
+      <Streamdown plugins={streamdownPlugins}>
+        {prepareAssistantMarkdownForMath(children)}
+      </Streamdown>
     </CollapsibleContent>
   )
 );

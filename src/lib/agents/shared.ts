@@ -14,8 +14,14 @@ export const AGENT_MODEL = openai("gpt-5.4-mini");
  * Appended to every agent’s system instructions. Matches chat rendering (Streamdown +
  * KaTeX); not required for math to work, but nudges consistent $ / $$ LaTeX in answers.
  */
+/**
+ * Nudges INR, Indian numbering, and local conventions in answers (rent, money, dates, utilities).
+ * Appended to all agent system prompts.
+ */
+export const AGENT_INDIAN_LOCALE_HINT = `**Locale (India):** In all natural-language answers, **money and rent** must be discussed in **Indian Rupees (INR)**: use the **₹** symbol (or "Rs" / "INR" when needed) and **Indian place-value grouping** (e.g. ₹1,25,000; 12.5 **lakh**; 2.1 **crore** when helpful in prose). Do not default to US dollars. For **dates** in explanations, prefer **DD-MM-YYYY** or unambiguous long forms unless the data follows another convention. For **electricity/utility** amounts, use **kWh** and Indian bill phrasing (e.g. "units" of electricity) when relevant. If database or file columns store amounts in a different unit (e.g. **paise**, whole **rupees**), say so and convert or label clearly.`;
+
 export const AGENT_MARKDOWN_MATH_HINT =
-  "Mathematical notation in markdown is rendered in the chat: use $...$ for inline LaTeX and $$...$$ on their own lines for display equations. For a literal dollar sign in normal text, write \\$.";
+  "Mathematical notation is rendered with KaTeX. Prefer **$...$** for short inline TeX, and use **display math** on its **own line** as $$ ... $$ (newline before the opening $$ and after the closing $$ when possible) so it parses reliably. You may also use **\\( ... \\)** for inline and **\\[ ... \\]** for display; both are normalised. Do not use only plain [ ... ] for TeX. For a literal dollar in prose, use \\$ or words like 'USD'.";
 
 // ─── Tools ──────────────────────────────────────────────────────────────────
 /**
@@ -44,7 +50,8 @@ export const AGENT_STOP_WHEN = stepCountIs(10);
 export const maxDuration = 60;
 
 // ─── Stream helper ───────────────────────────────────────────────────────────
-function toStreamResponse(result: {
+/** UIMessage stream (reasoning + sources) for any ToolLoopAgent stream result. */
+export function toStreamResponse(result: {
   toUIMessageStreamResponse: (opts?: {
     sendReasoning?: boolean;
     sendSources?: boolean;

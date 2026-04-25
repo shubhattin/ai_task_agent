@@ -1,6 +1,6 @@
-import { handleAgentRequest, maxDuration } from "@/lib/agents/shared";
-import { databaseAgent } from "@/lib/agents/agents";
+import { maxDuration } from "@/lib/agents/shared";
+import { handleDatabaseAgentRequest } from "@/lib/agents/db_agent";
 
 export { maxDuration };
 
-export const POST = (req: Request) => handleAgentRequest(req, databaseAgent);
+export const POST = (req: Request) => handleDatabaseAgentRequest(req);

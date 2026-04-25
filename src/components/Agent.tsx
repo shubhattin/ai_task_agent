@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment, useEffect } from "react";
+import { useState, Fragment, useEffect, useRef, useMemo, useReducer } from "react";
 import { useChat, useCompletion } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
@@ -70,6 +70,18 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DATABASE_CHOICES,
+  DATABASE_TARGET_IDS,
+  type DatabaseTargetId,
+} from "@/lib/agents/database-constants";
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 import {
@@ -134,13 +146,14 @@ const TABS: TabConfig[] = [
     label: "Database",
     icon: <DatabaseIcon className="size-4" />,
     description:
-      "Provide your DB schema and get optimised multi-step SQL queries generated for you.",
-    placeholder: "Paste your schema and describe the data you need to fetch…",
+      "Query two read-only PostgreSQL schemas with live SELECTs, web search, and optional code analysis.",
+    placeholder:
+      "Ask questions about the data (two read-only DBs available below)…",
     apiPath: "/api/database",
     accentColor: "text-sky-400",
     capabilities: [
-      "Schema understanding",
-      "Multi-step SQL",
+      "Read-only SQL",
+      "Schema + multi-step",
       "Query optimisation",
     ],
   },
@@ -227,6 +240,13 @@ type CodeInterpreterToolOutput = {
     | { type: "logs"; logs: string }
     | { type: "image"; url: string }
   > | null;
+};
+
+type SqlQueryToolInput = { sql?: string | null };
+type SqlQueryToolOutput = {
+  rowCount: number;
+  truncated: boolean;
+  rows: unknown[];
 };
 
 function shortContainerId(id: string, head = 8, tail = 4) {
@@ -434,6 +454,46 @@ function renderToolStepsForChain(
       );
     }
 
+    if (part.type === "tool-sqlQuery") {
+      const tool = part as ToolPartLike & { errorText?: string };
+      const done =
+        tool.state === "output-available" || tool.state === "output-error";
+      const input = tool.input as SqlQueryToolInput | undefined;
+      const output = tool.output as SqlQueryToolOutput | undefined;
+      const sql = typeof input?.sql === "string" ? input.sql : "";
+      const showSql = sql.trim().length > 0;
+      const rowHint =
+        output && tool.state === "output-available"
+          ? output.truncated
+            ? ` (${output.rowCount} rows, truncated)`
+            : ` (${output.rowCount} rows)`
+          : "";
+
+      return (
+        <ChainOfThoughtStep
+          key={`${messageId}-${keyPrefix}-${i}`}
+          icon={DatabaseIcon}
+          label={
+            tool.state === "output-error"
+              ? "SQL query failed"
+              : `Read-only query${rowHint}`
+          }
+          status={done ? "complete" : "active"}
+        >
+          {tool.state === "output-error" && tool.errorText ? (
+            <p className="text-destructive text-xs whitespace-pre-wrap wrap-break-word">
+              {tool.errorText}
+            </p>
+          ) : null}
+          {showSql ? (
+            <pre className="max-h-36 overflow-x-auto overflow-y-auto rounded-md border border-border/50 bg-muted/70 p-2 font-mono text-[0.7rem] leading-relaxed wrap-break-word whitespace-pre-wrap">
+              {truncateDisplayText(sql, 8000)}
+            </pre>
+          ) : null}
+        </ChainOfThoughtStep>
+      );
+    }
+
     if (part.type.startsWith("tool-")) {
       const tool = part as ToolPartLike;
       const done =
@@ -582,8 +642,29 @@ function AgentChat({ tab }: { tab: TabConfig }) {
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
+  const databaseTargetRef = useRef<DatabaseTargetId>("1");
+  const [, databaseUiTick] = useReducer((n: number) => n + 1, 0);
+
+  const databaseChatBody = useMemo(
+    () => ({
+      get database(): DatabaseTargetId {
+        return databaseTargetRef.current;
+      },
+    }),
+    [],
+  );
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: tab.apiPath,
+        body: tab.id === "database" ? databaseChatBody : undefined,
+      }),
+    [tab.apiPath, tab.id, databaseChatBody],
+  );
+
   const { messages, sendMessage, status, regenerate } = useChat({
-    transport: new DefaultChatTransport({ api: tab.apiPath }),
+    transport,
   });
 
   const {
@@ -595,6 +676,9 @@ function AgentChat({ tab }: { tab: TabConfig }) {
     api: "/api/summarize",
     streamProtocol: "text",
   });
+
+  const currentDatabaseId = databaseTargetRef.current;
+  const currentDatabaseChoice = DATABASE_CHOICES[currentDatabaseId];
 
   const handlePdfExport = async (markdownText: string) => {
     setIsExportingPdf(true);
@@ -823,6 +907,58 @@ function AgentChat({ tab }: { tab: TabConfig }) {
                   <PromptInputActionAddAttachments />
                 </PromptInputActionMenuContent>
               </PromptInputActionMenu>
+
+              {tab.id === "database" && (
+                <Select
+                  value={currentDatabaseId}
+                  onValueChange={(v) => {
+                    databaseTargetRef.current = v as DatabaseTargetId;
+                    databaseUiTick();
+                  }}
+                >
+                  <SelectTrigger
+                    className="h-7 w-[min(20rem,100%)] min-w-0 max-w-sm shrink-0 items-center justify-between gap-2 border-border/50 bg-muted/30 pl-2 pr-1 [&_[data-slot=select-value]]:hidden"
+                    title={`${currentDatabaseChoice.name} — ${currentDatabaseChoice.description}`}
+                    aria-label={`${currentDatabaseChoice.name} (read-only). ${currentDatabaseChoice.description}`}
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                      <DatabaseIcon
+                        className="size-3.5 shrink-0 text-sky-400"
+                        aria-hidden
+                      />
+                      <span className="line-clamp-1 text-left text-xs font-medium text-foreground">
+                        {currentDatabaseChoice.name}
+                      </span>
+                    </div>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent
+                    className="min-w-[var(--radix-select-trigger-width)] max-w-sm"
+                    position="popper"
+                    sideOffset={4}
+                  >
+                    {DATABASE_TARGET_IDS.map((opt) => {
+                      const c = DATABASE_CHOICES[opt];
+                      return (
+                        <SelectItem
+                          key={opt}
+                          value={opt}
+                          className="h-auto min-h-12 items-start py-2 pr-6"
+                        >
+                          <div className="flex min-w-0 flex-col gap-0.5 text-left">
+                            <span className="text-xs font-medium leading-tight text-foreground">
+                              {c.name}
+                            </span>
+                            <span className="text-[10px] leading-snug text-muted-foreground">
+                              {c.description}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
 
               {/* Search indicator */}
               <PromptInputButton

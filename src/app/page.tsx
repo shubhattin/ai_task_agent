@@ -1,5 +1,6 @@
 import Agent from "@/components/Agent";
 import {
+  Code2,
   SearchIcon,
   BarChart3Icon,
   DatabaseIcon,
@@ -89,11 +90,11 @@ export default function Home() {
           </div> */}
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight max-w-4xl">
-            Automate Complex Tasks with <GradientText>AI Agents</GradientText>
+            <GradientText>Passad AI</GradientText> : your agent for complex work
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-            AutoAgent accepts any complex instruction, decomposes it into
+            Passad AI accepts any complex instruction, decomposes it into
             logical steps, and executes each one reliably — with full
             observability over reasoning and tool calls.
           </p>
@@ -156,13 +157,57 @@ export default function Home() {
               id="features-heading"
               className="text-3xl sm:text-4xl font-bold text-foreground"
             >
-              Everything you need to{" "}
-              <GradientText>automate with confidence</GradientText>
+              <GradientText>Passad AI</GradientText> — everything you need to
+              automate with confidence
             </h2>
             <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Built on the Vercel AI SDK with ToolLoopAgent for reliable,
-              observable, multi-step task execution.
+              Passad AI is built on the Vercel AI SDK with ToolLoopAgent for
+              reliable, observable, multi-step task execution.
             </p>
+          </div>
+
+          <div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+            aria-label="Core capabilities"
+          >
+            {[
+              {
+                icon: <Code2 className="size-5 text-amber-400" />,
+                title: "Python runtime",
+                description:
+                  "Execute code in a managed runtime: scripts, data transforms, and checks so agents can act on your instructions safely.",
+                ring: "border-amber-500/40 bg-amber-500/10",
+              },
+              {
+                icon: <SearchIcon className="size-5 text-violet-400" />,
+                title: "Web search",
+                description:
+                  "Search and synthesize the public web in multiple steps so answers stay current when your task needs outside context.",
+                ring: "border-violet-500/40 bg-violet-500/10",
+              },
+              {
+                icon: <DatabaseIcon className="size-5 text-sky-400" />,
+                title: "Live PostgreSQL",
+                description:
+                  "Run schema-aware SQL against live data — multi-step queries, exploration, and answers grounded in your database.",
+                ring: "border-sky-500/40 bg-sky-500/10",
+              },
+            ].map(({ icon, title, description, ring }) => (
+              <div
+                key={title}
+                className={`flex flex-col gap-2.5 p-4 rounded-2xl border ${ring} backdrop-blur-sm`}
+              >
+                <div className="flex items-center gap-2.5">
+                  {icon}
+                  <h3 className="font-semibold text-foreground text-sm">
+                    {title}
+                  </h3>
+                </div>
+                <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
+                  {description}
+                </p>
+              </div>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

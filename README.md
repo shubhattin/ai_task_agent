@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Passad AI (`ai_task_agent`)
 
-## Getting Started
+**Passad AI** is a [Next.js](https://nextjs.org) app for running multi-step AI agents: a landing page in [`src/app/page.tsx`](src/app/page.tsx) (hero, feature sections, and **how it works**) plus an embedded **agent interface** for chat.
 
-First, run the development server:
+## What it does
+
+- **Research, data, and database agents** in one UI — pick a mode, start a session, and chat with streaming tool use (Vercel **AI SDK** + **AI Elements**-style components).
+- **Sign in with Google** via **Convex Auth**; chats are tied to the logged-in user and stored in **Convex**.
+
+## Local development
+
+```bash
+npm install
+npx convex dev
+```
+
+In a second terminal:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Configure Convex, OAuth, and any model/API env vars for your deployment as in your own setup (this repo may not include `.env` files).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project layout (short)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Area | Role |
+|------|------|
+| `src/app/page.tsx` | Home layout: hero, `HomeAgentSection`, features, “how it works” |
+| `src/components/Agent.tsx` | Tabbed agent UI (research / data / database) |
+| `convex/` | Auth, chat persistence, HTTP routes for agents |
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Production build:** `npm run build` then `npm start`.

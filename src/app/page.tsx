@@ -8,6 +8,7 @@ import {
   ShieldCheckIcon,
   GitBranchIcon,
 } from "lucide-react";
+import { SiGithub } from "react-icons/si";
 
 // ─── Feature cards ──────────────────────────────────────────────────────────
 const FEATURES = [
@@ -272,6 +273,18 @@ export default function Home() {
             ))}
           </div>
         </section>
+
+        <footer className="border-t border-border/40 pt-8 mt-2 pb-2 text-center text-sm text-muted-foreground">
+          <a
+            href="https://github.com/shubhattin/ai_task_agent"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+          >
+            <SiGithub className="size-4" aria-hidden />
+            GitHub
+          </a>
+        </footer>
       </div>
     </main>
   );

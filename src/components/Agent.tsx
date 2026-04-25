@@ -49,6 +49,7 @@ import {
   ChainOfThoughtStep,
   ChainOfThoughtSearchResults,
   ChainOfThoughtSearchResult,
+  ChainOfThoughtImage,
 } from "@/components/ai-elements/chain-of-thought";
 import {
   Reasoning,
@@ -81,6 +82,7 @@ import {
   BrainIcon,
   SparklesIcon,
   DownloadIcon,
+  TerminalIcon,
 } from "lucide-react";
 
 // ─── Tab config ────────────────────────────────────────────────────────────────
@@ -211,6 +213,73 @@ function getWebSearchResultUrls(output: unknown): string[] {
   return legacy.map((r) => r.url).filter(Boolean) as string[];
 }
 
+/**
+ * OpenAI `codeInterpreter` tool — matches @ai-sdk/openai codeInterpreterInputSchema /
+ * codeInterpreterOutputSchema (see `openai.tools.codeInterpreter`).
+ */
+type CodeInterpreterToolInput = {
+  code?: string | null;
+  containerId: string;
+};
+
+type CodeInterpreterToolOutput = {
+  outputs?: Array<
+    | { type: "logs"; logs: string }
+    | { type: "image"; url: string }
+  > | null;
+};
+
+function shortContainerId(id: string, head = 8, tail = 4) {
+  if (id.length <= head + tail + 1) return id;
+  return `${id.slice(0, head)}…${id.slice(-tail)}`;
+}
+
+function truncateDisplayText(s: string, max: number) {
+  if (s.length <= max) return s;
+  return `${s.slice(0, max - 1)}…`;
+}
+
+function getCodeInterpreterStepLabel(
+  tool: ToolPartLike & { errorText?: string },
+): string {
+  if (tool.state === "output-error") {
+    return "Code interpreter failed";
+  }
+  if (tool.state === "output-available") {
+    const out = tool.output as CodeInterpreterToolOutput | undefined;
+    const outs = out?.outputs;
+    if (outs && outs.length > 0) {
+      const hasLogs = outs.some((o) => o.type === "logs" && o.logs?.trim());
+      const hasImages = outs.some((o) => o.type === "image");
+      if (hasImages && !hasLogs) return "Code interpreter (image output)";
+      if (hasLogs) return "Code interpreter (finished)";
+    }
+    return "Code interpreter (finished)";
+  }
+  const input = tool.input as CodeInterpreterToolInput | undefined;
+  const code = input?.code?.trim();
+  if (code) {
+    const firstLine = code.split("\n")[0] ?? "";
+    return `Running: ${truncateDisplayText(firstLine, 56)}`;
+  }
+  if (
+    tool.state === "input-streaming" ||
+    tool.state === "input-available" ||
+    tool.state === "approval-requested" ||
+    tool.state === "approval-responded"
+  ) {
+    return "Code interpreter (running)…";
+  }
+  return "Code interpreter";
+}
+
+function getCodeInterpreterSessionDescription(
+  containerId: string | undefined,
+): string | undefined {
+  if (!containerId?.trim()) return undefined;
+  return `Sandbox session ${shortContainerId(containerId)} — same id across steps keeps state`;
+}
+
 // ─── Sources strip (for source-url parts from webSearch) ───────────────────────
 
 function SourceStrip({ message }: { message: UIMessage }) {
@@ -300,6 +369,67 @@ function renderToolStepsForChain(
               })}
             </ChainOfThoughtSearchResults>
           )}
+        </ChainOfThoughtStep>
+      );
+    }
+
+    if (part.type === "tool-codeInterpreter") {
+      const tool = part as ToolPartLike & { errorText?: string };
+      const done =
+        tool.state === "output-available" || tool.state === "output-error";
+      const input = tool.input as CodeInterpreterToolInput | undefined;
+      const output = tool.output as CodeInterpreterToolOutput | undefined;
+      const code = typeof input?.code === "string" ? input.code : "";
+      const showCode = code.trim().length > 0;
+      const sessionHint = getCodeInterpreterSessionDescription(
+        input?.containerId,
+      );
+
+      return (
+        <ChainOfThoughtStep
+          key={`${messageId}-${keyPrefix}-${i}`}
+          icon={TerminalIcon}
+          label={getCodeInterpreterStepLabel(tool)}
+          description={sessionHint}
+          status={done ? "complete" : "active"}
+        >
+          {tool.state === "output-error" && tool.errorText ? (
+            <p className="text-destructive text-xs whitespace-pre-wrap wrap-break-word">
+              {tool.errorText}
+            </p>
+          ) : null}
+          {showCode ? (
+            <pre className="max-h-40 overflow-x-auto overflow-y-auto rounded-md border border-border/50 bg-muted/70 p-2 font-mono text-[0.7rem] leading-relaxed wrap-break-word whitespace-pre-wrap">
+              {truncateDisplayText(code, 12000)}
+            </pre>
+          ) : null}
+          {tool.state === "output-available" &&
+          output?.outputs &&
+          output.outputs.length > 0 ? (
+            <div className="space-y-2">
+              {output.outputs.map((o, oi) =>
+                o.type === "logs" ? (
+                  <ScrollArea
+                    key={oi}
+                    className="max-h-44 rounded-md border border-border/50 bg-muted/50"
+                  >
+                    <pre className="p-2 font-mono text-[0.7rem] leading-relaxed wrap-break-word whitespace-pre-wrap">
+                      {o.logs}
+                    </pre>
+                  </ScrollArea>
+                ) : o.type === "image" ? (
+                  <ChainOfThoughtImage key={oi}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={o.url}
+                      alt="Code interpreter figure"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </ChainOfThoughtImage>
+                ) : null,
+              )}
+            </div>
+          ) : null}
         </ChainOfThoughtStep>
       );
     }

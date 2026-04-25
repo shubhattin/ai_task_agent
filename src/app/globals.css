@@ -127,4 +127,8 @@
   html {
     @apply font-sans;
   }
+  /* KaTeX (Streamdown + @streamdown/math): follow theme text color */
+  .katex {
+    color: inherit;
+  }
 }

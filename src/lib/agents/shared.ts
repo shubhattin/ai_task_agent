@@ -10,12 +10,30 @@ import { openai } from "@ai-sdk/openai";
 /** GPT-5.4 (medium reasoning) — shared across all agents */
 export const AGENT_MODEL = openai("gpt-5.4-mini");
 
+/**
+ * Appended to every agent’s system instructions. Matches chat rendering (Streamdown +
+ * KaTeX); not required for math to work, but nudges consistent $ / $$ LaTeX in answers.
+ */
+export const AGENT_MARKDOWN_MATH_HINT =
+  "Mathematical notation in markdown is rendered in the chat: use $...$ for inline LaTeX and $$...$$ on their own lines for display equations. For a literal dollar sign in normal text, write \\$.";
+
 // ─── Tools ──────────────────────────────────────────────────────────────────
 /**
  * OpenAI native web search tool — real-time results, no API key needed beyond OPENAI_API_KEY.
  * Exposed as `webSearch` so the UI can identify it as type "tool-webSearch".
  */
 export const webSearchTool = openai.tools.webSearch({});
+
+/**
+ * OpenAI native code interpreter (Python in a managed sandbox).
+ *
+ * - **Sessions:** With default options, the model receives a `containerId` on each tool
+ *   call and reuses it across steps in the same run so the environment persists (files,
+ *   variables). Pass `container: { fileIds: [...] }` only when you need specific uploaded
+ *   OpenAI file IDs available in the sandbox.
+ * - **Latency:** The Responses API streams tool events; no extra config is required here.
+ */
+export const codeInterpreterTool = openai.tools.codeInterpreter({});
 
 // ─── Stop condition ──────────────────────────────────────────────────────────
 /** Max 10 tool-call steps per agent run (prevents runaway loops) */

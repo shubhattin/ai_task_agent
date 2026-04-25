@@ -1,9 +1,9 @@
 import { streamText, convertToModelMessages } from "ai";
 import type { UIMessage } from "ai";
 import { coerceTabularFilePartsToText } from "@/lib/agents/coerce-tabular-file-parts";
-import { AGENT_MODEL, maxDuration } from "@/lib/agents/shared";
+import { AGENT_MODEL } from "@/lib/agents/shared";
 
-export { maxDuration };
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {

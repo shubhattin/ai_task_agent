@@ -69,10 +69,11 @@ export function toStreamResponse(result: {
  * Shared POST handler for all agent routes.
  * Handles: JSON body parsing → convertToModelMessages → agent.stream → response.
  *
- * Each route.ts just needs:
+ * Each route.ts just needs (Next.js needs a literal `maxDuration` in the route file, not
+ * re-exported from here):
+ *   export const maxDuration = 60;
  *   import { handleAgentRequest } from "@/lib/agents/shared";
  *   import { researchAgent } from "@/lib/agents/agents";
- *   export { maxDuration } from "@/lib/agents/shared";
  *   export const POST = (req: Request) => handleAgentRequest(req, researchAgent);
  */
 export async function handleAgentRequest(

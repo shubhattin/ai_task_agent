@@ -13,6 +13,7 @@ import {
   toStreamResponse,
   webSearchTool,
 } from "./shared";
+import { coerceTabularFilePartsToText } from "./coerce-tabular-file-parts";
 import {
   DATABASE_CHOICES,
   DATABASE_TARGET_IDS,
@@ -185,13 +186,23 @@ function assertReadonlySqlInput(sql: string): string {
   }
   const one = stripped.replace(/;+\s*$/g, "");
   if (one.includes(";")) {
-    throw new Error("Only a single statement is allowed (no multiple queries).");
+    throw new Error(
+      "Only a single statement is allowed (no multiple queries).",
+    );
   }
   if (!/^(SELECT|WITH)\b/i.test(one)) {
-    throw new Error("Only SELECT or WITH (CTEs leading to a read) are allowed — no DML/DDL.");
+    throw new Error(
+      "Only SELECT or WITH (CTEs leading to a read) are allowed — no DML/DDL.",
+    );
   }
-  if (/\b(INSERT|UPDATE|DELETE|TRUNCATE|GRANT|REVOKE|ALTER|CREATE|DROP|VACUUM|COPY)\b/i.test(one)) {
-    throw new Error("That statement contains a forbidden SQL keyword for read-only use.");
+  if (
+    /\b(INSERT|UPDATE|DELETE|TRUNCATE|GRANT|REVOKE|ALTER|CREATE|DROP|VACUUM|COPY)\b/i.test(
+      one,
+    )
+  ) {
+    throw new Error(
+      "That statement contains a forbidden SQL keyword for read-only use.",
+    );
   }
   return one;
 }
@@ -200,7 +211,9 @@ type SqlResultRow = Record<string, unknown>;
 
 function getSqlClient(connectionString: string | undefined): Sql {
   if (!connectionString) {
-    throw new Error("Database connection is not configured (missing DATABASE_URL).");
+    throw new Error(
+      "Database connection is not configured (missing DATABASE_URL).",
+    );
   }
   return postgres(connectionString, {
     max: 1,
@@ -221,9 +234,7 @@ function getCachedSqlForTarget(id: DatabaseTargetId): Sql {
   return c;
 }
 
-export function createSqlQueryTool(
-  id: DatabaseTargetId,
-) {
+export function createSqlQueryTool(id: DatabaseTargetId) {
   const label = DATABASE_CHOICES[id].name;
 
   return tool({
@@ -254,9 +265,11 @@ export function createSqlQueryTool(
   });
 }
 
-function getSchemaAndName(
-  id: DatabaseTargetId,
-): { name: string; schemaDdl: string; url: string | undefined } {
+function getSchemaAndName(id: DatabaseTargetId): {
+  name: string;
+  schemaDdl: string;
+  url: string | undefined;
+} {
   const name = DATABASE_CHOICES[id].name;
   if (id === "1") {
     return { name, schemaDdl: PSQL_SCHEMA1, url: PSQL_URL1 };
@@ -302,6 +315,8 @@ Guidelines:
 6. The sqlQuery tool may only receive a single SELECT (or WITH...SELECT) — no semicolons in the middle.
 7. For privacy, avoid selecting sensitive columns unless the user needs them; still respect their question.
 
+ALWAYS USE CODE INTERPRETER TOOL WHEN ASKED TO DO SOME MATHEMATICAL CALCULATIONS OR OTHER TASKS THAT CAN BE DONE WITH CODE MORE RELIABLY.
+
 ${AGENT_INDIAN_LOCALE_HINT}
 
 ${AGENT_MARKDOWN_MATH_HINT}`,
@@ -313,14 +328,18 @@ ${AGENT_MARKDOWN_MATH_HINT}`,
   });
 }
 
-export type DatabaseToolLoopAgent = NonNullable<ReturnType<typeof getDatabaseAgent>>;
+export type DatabaseToolLoopAgent = NonNullable<
+  ReturnType<typeof getDatabaseAgent>
+>;
 
 const bodySchema = z.object({
   messages: z.array(z.unknown()),
   database: z.enum(DATABASE_TARGET_IDS).default("1"),
 });
 
-export async function handleDatabaseAgentRequest(req: Request): Promise<Response> {
+export async function handleDatabaseAgentRequest(
+  req: Request,
+): Promise<Response> {
   try {
     const json = (await req.json()) as unknown;
     const { messages, database } = bodySchema.parse(json);
@@ -333,15 +352,19 @@ export async function handleDatabaseAgentRequest(req: Request): Promise<Response
         { status: 503, headers: { "Content-Type": "application/json" } },
       );
     }
+    const forModel = await coerceTabularFilePartsToText(messages as UIMessage[]);
     const result = await agent.stream({
-      messages: await convertToModelMessages(messages as UIMessage[]),
+      messages: await convertToModelMessages(forModel),
     });
     return toStreamResponse(result);
   } catch (e) {
     console.error("[database-agent] Error:", e);
-    return new Response(JSON.stringify({ error: "Database agent request failed" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Database agent request failed" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 }

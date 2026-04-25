@@ -5,6 +5,7 @@
 import { stepCountIs, convertToModelMessages } from "ai";
 import type { UIMessage, ToolLoopAgent } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { coerceTabularFilePartsToText } from "./coerce-tabular-file-parts";
 
 // ─── Model ──────────────────────────────────────────────────────────────────
 /** GPT-5.4 (medium reasoning) — shared across all agents */
@@ -81,8 +82,9 @@ export async function handleAgentRequest(
 ): Promise<Response> {
   try {
     const { messages }: { messages: UIMessage[] } = await req.json();
+    const forModel = await coerceTabularFilePartsToText(messages);
     const result = await agent.stream({
-      messages: await convertToModelMessages(messages),
+      messages: await convertToModelMessages(forModel),
     });
     return toStreamResponse(result);
   } catch (error) {

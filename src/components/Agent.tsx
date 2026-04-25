@@ -4,7 +4,7 @@ import { useState, Fragment, useEffect, useRef, useMemo, useReducer } from "reac
 import { useChat, useCompletion } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
-import { marked } from "marked";
+import { toast } from "sonner";
 
 // ─── AI Elements ───────────────────────────────────────────────────────────────
 import {
@@ -620,8 +620,13 @@ function MessageParts({
     }
 
     if (p.type === "text") {
+      const isTailWhileStreaming =
+        isLastMessage && isStreaming && i === lastIdx;
       out.push(
-        <MessageResponse key={`${message.id}-txt-${i}`}>
+        <MessageResponse
+          key={`${message.id}-txt-${i}`}
+          isAnimating={isTailWhileStreaming}
+        >
           {p.text}
         </MessageResponse>,
       );
@@ -879,7 +884,15 @@ function AgentChat({ tab }: { tab: TabConfig }) {
         <PromptInput
           onSubmit={handleSubmit}
           className="w-full"
-          accept="image/*,text/*,application/json,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+          accept="image/*,text/*,application/json,application/pdf,application/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values"
+          onError={(err) => {
+            toast.error(err.message, {
+              description:
+                err.code === "accept"
+                  ? "Try .csv / .xlsx, or a type your browser reports correctly."
+                  : undefined,
+            });
+          }}
           multiple
           globalDrop
         >

@@ -558,18 +558,49 @@ export const PromptInput = ({
         return true;
       }
 
+      const nameLower = f.name.toLowerCase();
+      const t = f.type;
       const patterns = accept
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
 
       return patterns.some((pattern) => {
-        if (pattern.endsWith("/*")) {
-          // e.g: image/* -> image/
-          const prefix = pattern.slice(0, -1);
-          return f.type.startsWith(prefix);
+        if (pattern.startsWith(".")) {
+          return nameLower.endsWith(pattern.toLowerCase());
         }
-        return f.type === pattern;
+        if (pattern.endsWith("/*")) {
+          const prefix = pattern.slice(0, -1);
+          return t.startsWith(prefix);
+        }
+        if (t === pattern) {
+          return true;
+        }
+        if (
+          (pattern === "text/csv" ||
+            pattern === "application/csv" ||
+            pattern === "text/tab-separated-values" ||
+            pattern === "text/tsv") &&
+          (nameLower.endsWith(".csv") || nameLower.endsWith(".tsv")) &&
+          (t === "" ||
+            t === "text/plain" ||
+            t === "application/octet-stream" ||
+            t === "text/csv" ||
+            t === "text/tab-separated-values" ||
+            t === "application/csv")
+        ) {
+          return true;
+        }
+        if (
+          (pattern ===
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+            pattern === "application/vnd.ms-excel") &&
+          (nameLower.endsWith(".xlsx") || nameLower.endsWith(".xls")) &&
+          (t === "" || t === "application/octet-stream" || t === pattern)
+        ) {
+          return true;
+        }
+        return false;
       });
     },
     [accept]

@@ -1,5 +1,6 @@
 import { streamText, convertToModelMessages } from "ai";
 import type { UIMessage } from "ai";
+import { coerceTabularFilePartsToText } from "@/lib/agents/coerce-tabular-file-parts";
 import { AGENT_MODEL, maxDuration } from "@/lib/agents/shared";
 
 export { maxDuration };
@@ -7,10 +8,11 @@ export { maxDuration };
 export async function POST(req: Request) {
   try {
     const { messages }: { messages: UIMessage[] } = await req.json();
+    const forModel = await coerceTabularFilePartsToText(messages);
 
     const result = streamText({
       model: AGENT_MODEL,
-      messages: await convertToModelMessages(messages),
+      messages: await convertToModelMessages(forModel),
       system: `You are a senior analyst and technical writer. You will receive prior messages only as raw material. Your job is to produce one cohesive document that reads as original research or a professional briefing on the subject matter itself—not as a recap of a chat, assistant output, or “summary.”
 
 Rules:

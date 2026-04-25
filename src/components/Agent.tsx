@@ -77,6 +77,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -89,6 +90,11 @@ import {
   DATABASE_TARGET_IDS,
   type DatabaseTargetId,
 } from "@/lib/agents/database-constants";
+import { useAuthToken } from "@convex-dev/auth/react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
+import type { Doc as AgentChatDoc, Id } from "@convex/_generated/dataModel";
+import { getConvexHttpSiteUrl } from "@/lib/convex-site";
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 import {
@@ -648,10 +654,31 @@ function MessageParts({
 
 // ─── Single Agent Chat Panel ───────────────────────────────────────────────────
 
-function AgentChat({ tab }: { tab: TabConfig }) {
+function deriveChatTitle(messages: UIMessage[]): string {
+  const first = messages.find((m) => m.role === "user");
+  if (!first) return "New chat";
+  const textPart = first.parts?.find((p) => p.type === "text");
+  const text =
+    textPart && textPart.type === "text" ? textPart.text.trim() : "";
+  if (!text) return "New chat";
+  return text.length > 80 ? `${text.slice(0, 77)}…` : text;
+}
+
+function AgentChat({
+  tab,
+  sessionId,
+  initialMessages,
+}: {
+  tab: TabConfig;
+  sessionId: Id<"agentChats">;
+  initialMessages: UIMessage[];
+}) {
   const [text, setText] = useState("");
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const token = useAuthToken();
+  const saveMessagesM = useMutation(api.chats.saveMessages);
 
   const databaseTargetRef = useRef<DatabaseTargetId>("2");
   const [, databaseUiTick] = useReducer((n: number) => n + 1, 0);
@@ -665,17 +692,42 @@ function AgentChat({ tab }: { tab: TabConfig }) {
     [],
   );
 
+  const convexHttpBase = getConvexHttpSiteUrl();
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: tab.apiPath,
+        api:
+          tab.id === "database" && convexHttpBase
+            ? `${convexHttpBase}/api/database`
+            : tab.apiPath,
         body: tab.id === "database" ? databaseChatBody : undefined,
+        fetch:
+          tab.id === "database"
+            ? (url, init) => {
+                if (!token) {
+                  return Promise.reject(new Error("Not signed in"));
+                }
+                const h = new Headers(init?.headers);
+                h.set("Authorization", `Bearer ${token}`);
+                return fetch(String(url), { ...init, headers: h });
+              }
+            : undefined,
       }),
-    [tab.apiPath, tab.id, databaseChatBody],
+    [tab.apiPath, tab.id, databaseChatBody, convexHttpBase, token],
   );
 
   const { messages, sendMessage, status, regenerate } = useChat({
+    id: sessionId,
+    messages: initialMessages,
     transport,
+    onFinish: ({ messages: next }) => {
+      void saveMessagesM({
+        id: sessionId,
+        messagesJson: JSON.stringify(next),
+        title: deriveChatTitle(next),
+      });
+    },
   });
 
   const {
@@ -1065,7 +1117,55 @@ function AgentChat({ tab }: { tab: TabConfig }) {
 
 export default function Agent() {
   const [activeTab, setActiveTab] = useState<AgentTabId>("research");
+  const [sessionIdByTab, setSessionIdByTab] = useState<
+    Partial<Record<AgentTabId, Id<"agentChats">>>
+  >({});
+  const seedingEmptyListRef = useRef(false);
+
+  useEffect(() => {
+    seedingEmptyListRef.current = false;
+  }, [activeTab]);
+
+  const createChat = useMutation(api.chats.createChat);
+  const list = useQuery(api.chats.listByTab, { agentTab: activeTab });
+
   const activeConfig = TABS.find((t) => t.id === activeTab)!;
+  const sessionId = sessionIdByTab[activeTab];
+  const chatDoc = useQuery(
+    api.chats.getOne,
+    sessionId ? { id: sessionId } : "skip",
+  );
+
+  // Pick or create a session when switching agent tab
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally sync session per tab
+  useEffect(() => {
+    if (list === undefined) return;
+    if (sessionIdByTab[activeTab]) return;
+    if (list.length > 0) {
+      setSessionIdByTab((s) => ({ ...s, [activeTab]: list[0]!._id }));
+      return;
+    }
+    if (seedingEmptyListRef.current) return;
+    seedingEmptyListRef.current = true;
+    void createChat({ agentTab: activeTab, title: "New chat" })
+      .then((id) => {
+        setSessionIdByTab((s) => ({ ...s, [activeTab]: id }));
+      })
+      .finally(() => {
+        seedingEmptyListRef.current = false;
+      });
+  }, [activeTab, list, sessionIdByTab, createChat]);
+
+  const initialMessages: UIMessage[] = useMemo(() => {
+    if (!chatDoc?.messagesJson) return [];
+    try {
+      return JSON.parse(chatDoc.messagesJson) as UIMessage[];
+    } catch {
+      return [];
+    }
+  }, [chatDoc?.messagesJson]);
+
+  const canShowChat = sessionId && chatDoc !== undefined;
 
   return (
     <div className="flex h-full min-h-0 rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm overflow-hidden shadow-2xl">
@@ -1130,17 +1230,69 @@ export default function Agent() {
 
       {/* ── Chat panel ── */}
       <div className="flex-1 min-w-0 flex flex-col p-4 gap-3">
-        {/* Tab header */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={activeConfig.accentColor}>{activeConfig.icon}</span>
-          <h3 className="text-sm font-semibold text-foreground">
-            {activeConfig.label} Agent
-          </h3>
+        <div className="flex flex-col gap-2 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <span className={activeConfig.accentColor}>{activeConfig.icon}</span>
+            <h3 className="text-sm font-semibold text-foreground">
+              {activeConfig.label} Agent
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select
+              value={sessionId ?? ""}
+              onValueChange={(v) => {
+                if (v) {
+                  setSessionIdByTab((s) => ({
+                    ...s,
+                    [activeTab]: v as Id<"agentChats">,
+                  }));
+                }
+              }}
+              disabled={!list?.length}
+            >
+              <SelectTrigger className="h-8 w-[200px] text-xs">
+                <SelectValue placeholder="Session" />
+              </SelectTrigger>
+              <SelectContent>
+                {(list ?? []).map((c: AgentChatDoc<"agentChats">) => (
+                  <SelectItem key={c._id} value={c._id}>
+                    {c.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => {
+                void createChat({ agentTab: activeTab, title: "New chat" }).then(
+                  (id) => {
+                    setSessionIdByTab((s) => ({ ...s, [activeTab]: id }));
+                  },
+                );
+              }}
+            >
+              New chat
+            </Button>
+          </div>
         </div>
 
-        {/* Agent chat — key forces remount when tab changes */}
         <div className="flex-1 min-h-0">
-          <AgentChat key={activeTab} tab={activeConfig} />
+          {!canShowChat ? (
+            <div className="flex h-full items-center justify-center text-muted-foreground gap-2">
+              <Spinner className="size-6" />
+              <span className="text-sm">Loading session…</span>
+            </div>
+          ) : (
+            <AgentChat
+              key={sessionId}
+              tab={activeConfig}
+              sessionId={sessionId}
+              initialMessages={initialMessages}
+            />
+          )}
         </div>
       </div>
     </div>

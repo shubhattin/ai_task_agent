@@ -1,4 +1,4 @@
-import Agent from "@/components/Agent";
+import { HomeAgentSection } from "@/components/HomeAgentSection";
 import {
   Code2,
   SearchIcon,
@@ -127,25 +127,7 @@ export default function Home() {
         </section>
 
         {/* ── Agent Chat Box ────────────────────────────────────────────────── */}
-        <section
-          id="agent-interface"
-          aria-label="AI Agent Interface"
-          className="flex flex-col gap-4"
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">
-              Try it now
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Select an agent on the left and start chatting
-            </p>
-          </div>
-
-          {/* Chat box — fixed height so it&apos;s always visible */}
-          <div className="h-[620px]">
-            <Agent />
-          </div>
-        </section>
+        <HomeAgentSection />
 
         {/* ── Features grid ────────────────────────────────────────────────── */}
         <section

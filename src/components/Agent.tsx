@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, Fragment, useEffect, useRef, useMemo, useReducer } from "react";
+import {
+  useState,
+  Fragment,
+  useEffect,
+  useRef,
+  useMemo,
+  useReducer,
+} from "react";
 import { useChat, useCompletion } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
@@ -237,8 +244,7 @@ type CodeInterpreterToolInput = {
 
 type CodeInterpreterToolOutput = {
   outputs?: Array<
-    | { type: "logs"; logs: string }
-    | { type: "image"; url: string }
+    { type: "logs"; logs: string } | { type: "image"; url: string }
   > | null;
 };
 
@@ -347,9 +353,7 @@ function PromptAttachments() {
 
 function shouldSkipMessagePart(p: UIMessage["parts"][number]): boolean {
   return (
-    p.type === "source-url" ||
-    p.type === "step-start" ||
-    p.type === "file"
+    p.type === "source-url" || p.type === "step-start" || p.type === "file"
   );
 }
 
@@ -554,7 +558,10 @@ function MessageParts({
       }
       const slice = parts.slice(start, i);
       const reasoningText = slice
-        .filter((r): r is Extract<typeof r, { type: "reasoning" }> => r.type === "reasoning")
+        .filter(
+          (r): r is Extract<typeof r, { type: "reasoning" }> =>
+            r.type === "reasoning",
+        )
         .map((r) => r.text)
         .join("\n\n");
       const groupEnd = i - 1;
@@ -567,8 +574,7 @@ function MessageParts({
         tailReasoning != null &&
         tailReasoning.state !== "done";
       const showReasoning =
-        slice.length > 0 &&
-        (reasoningText.length > 0 || isReasoningStreaming);
+        slice.length > 0 && (reasoningText.length > 0 || isReasoningStreaming);
 
       if (showReasoning) {
         out.push(
@@ -647,7 +653,7 @@ function AgentChat({ tab }: { tab: TabConfig }) {
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
-  const databaseTargetRef = useRef<DatabaseTargetId>("1");
+  const databaseTargetRef = useRef<DatabaseTargetId>("2");
   const [, databaseUiTick] = useReducer((n: number) => n + 1, 0);
 
   const databaseChatBody = useMemo(

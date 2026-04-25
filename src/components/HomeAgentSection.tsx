@@ -4,6 +4,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { AuthLoading, Authenticated, Unauthenticated } from "convex/react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { FcGoogle } from "react-icons/fc";
 import Agent from "@/components/Agent";
 
 export function HomeAgentSection() {
@@ -15,43 +16,35 @@ export function HomeAgentSection() {
       aria-label="AI Agent Interface"
       className="flex flex-col gap-4"
     >
-      {/* <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Try it now</h2>
-        <p className="text-sm text-muted-foreground">
-          Select an agent on the left and start chatting
-        </p>
-      </div> */}
+      <AuthLoading>
+        <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+          <Spinner className="size-5" />
+          <span>Loading session…</span>
+        </div>
+      </AuthLoading>
 
-      <div className="h-[620px] rounded-2xl border border-border/40 bg-muted/20 flex items-center justify-center overflow-hidden">
-        <AuthLoading>
-          <div className="flex flex-col items-center gap-3 text-muted-foreground">
-            <Spinner className="size-8" />
-            <p className="text-sm">Loading session…</p>
-          </div>
-        </AuthLoading>
+      <Unauthenticated>
+        <div className="flex w-full justify-center py-8">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => void signIn("google")}
+            className="h-11 gap-2.5 rounded-full px-8 text-sm font-medium min-w-[240px] justify-center"
+          >
+            <FcGoogle className="size-5 shrink-0" aria-hidden />
+            Sign in with Google
+          </Button>
+        </div>
+      </Unauthenticated>
 
-        <Unauthenticated>
-          <div className="flex flex-col items-center gap-4 px-6 text-center max-w-md">
-            <p className="text-muted-foreground">
-              Sign in with Google to use the agent interface. Your chat history
-              is saved per agent tab.
-            </p>
-            <Button
-              type="button"
-              onClick={() => void signIn("google")}
-              className="rounded-full"
-            >
-              Sign in with Google
-            </Button>
-          </div>
-        </Unauthenticated>
-
-        <Authenticated>
-          <div className="w-full h-full min-h-0 p-0 flex">
+      <Authenticated>
+        <div className="h-[620px] rounded-2xl border border-border/40 bg-muted/20 flex flex-col overflow-hidden">
+          <div className="w-full h-full min-h-0 flex flex-1 flex-col">
             <Agent />
           </div>
-        </Authenticated>
-      </div>
+        </div>
+      </Authenticated>
     </section>
   );
 }

@@ -85,6 +85,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserAccountMenu } from "@/components/UserAccountMenu";
 import {
   DATABASE_CHOICES,
   DATABASE_TARGET_IDS,
@@ -1220,8 +1221,9 @@ export default function Agent() {
           );
         })}
 
-        <div className="mt-auto px-3 py-3">
-          <p className="text-[10px] text-muted-foreground/40 leading-snug">
+        <div className="mt-auto flex min-h-0 flex-col gap-2 border-t border-border/50 px-1.5 pt-2 pb-2">
+          <UserAccountMenu popoverSide="right" popoverAlign="end" />
+          <p className="px-1.5 text-[10px] text-muted-foreground/40 leading-snug">
             All agents have web search enabled. Drag &amp; drop files onto the
             input to upload.
           </p>

@@ -13,6 +13,7 @@ import type * as chats from "../chats.js";
 import type * as databaseHttp from "../databaseHttp.js";
 import type * as http from "../http.js";
 import type * as neonDatabaseAgent from "../neonDatabaseAgent.js";
+import type * as viewer from "../viewer.js";
 
 import type {
   ApiFromModules,
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   databaseHttp: typeof databaseHttp;
   http: typeof http;
   neonDatabaseAgent: typeof neonDatabaseAgent;
+  viewer: typeof viewer;
 }>;
 
 /**

@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AutoAgent — AI Task Execution Agent",
+  title: "Passad AI — Agent Task Execution Agent",
   description:
     "An intelligent multi-agent system that accepts complex instructions, decomposes them into steps, and executes them reliably. Research, data processing, and database automation in one platform.",
 };

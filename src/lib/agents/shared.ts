@@ -9,7 +9,7 @@ import { coerceTabularFilePartsToText } from "./coerce-tabular-file-parts";
 
 // ─── Model ──────────────────────────────────────────────────────────────────
 /** GPT-5.4 (medium reasoning) — shared across all agents */
-export const AGENT_MODEL = openai("gpt-5.4-mini");
+export const AGENT_MODEL = openai("gpt-5.4-nano");
 
 /**
  * Appended to every agent’s system instructions. Matches chat rendering (Streamdown +

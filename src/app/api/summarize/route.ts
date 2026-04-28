@@ -29,9 +29,15 @@ Output only the Markdown document—no preamble, no closing remarks, no meta com
     return result.toTextStreamResponse();
   } catch (error) {
     console.error("[summarize-route] Error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Failed to generate summary" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error:
+          error instanceof Error ? error.message : "Failed to generate summary",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 }

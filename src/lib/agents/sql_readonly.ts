@@ -15,7 +15,9 @@ export function assertReadonlySqlInput(sql: string): string {
   }
   const one = stripped.replace(/;+\s*$/g, "");
   if (one.includes(";")) {
-    throw new Error("Only a single statement is allowed (no multiple queries).");
+    throw new Error(
+      "Only a single statement is allowed (no multiple queries).",
+    );
   }
   if (!/^(SELECT|WITH)\b/i.test(one)) {
     throw new Error(

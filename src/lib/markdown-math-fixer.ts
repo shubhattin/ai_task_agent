@@ -94,15 +94,12 @@ function normalizeAssistantMathDelimitersInner(markdown: string): string {
     },
   );
 
-  t = t.replace(
-    /\[([\s\S]*?)\](?!\()/g,
-    (full, inner: string) => {
-      const body = inner.trim();
-      if (body.length < 2) return full;
-      if (!/\\[a-zA-Z@*]/.test(body)) return full;
-      return `$${body}$`;
-    },
-  );
+  t = t.replace(/\[([\s\S]*?)\](?!\()/g, (full, inner: string) => {
+    const body = inner.trim();
+    if (body.length < 2) return full;
+    if (!/\\[a-zA-Z@*]/.test(body)) return full;
+    return `$${body}$`;
+  });
 
   return t;
 }

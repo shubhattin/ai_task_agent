@@ -3,6 +3,7 @@ import { code } from "@streamdown/code";
 import { createMathPlugin } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import rehypeKatex from "rehype-katex";
+import type { Pluggable } from "unified";
 
 const katexError = "var(--color-muted-foreground)";
 
@@ -24,7 +25,7 @@ const mathPlugin = (() => {
         output: "html" as const,
         strict: "ignore" as const,
       },
-    ],
+    ] as Pluggable,
   };
 })();
 

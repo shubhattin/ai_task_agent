@@ -8,7 +8,10 @@ import {
   MAX_ROWS,
   STMT_TIMEOUT_MS,
 } from "../src/lib/agents/sql_readonly";
-import { DATABASE_CHOICES, type DatabaseTargetId } from "../src/lib/agents/database-constants";
+import {
+  DATABASE_CHOICES,
+  type DatabaseTargetId,
+} from "../src/lib/agents/database-constants";
 
 const PSQL_URL1 = process.env.DATABASE_URL1;
 const PSQL_URL2 = process.env.DATABASE_URL2;

@@ -46,10 +46,8 @@ export function UserAccountMenu({
   const email = profile?.email ?? null;
   const picture = profile?.picture ?? null;
   const title = name || (email ? "Signed in" : "Account");
-  const primaryLine =
-    profile === undefined ? "…" : (name || email || "Account");
-  const secondaryLine =
-    profile === undefined ? "" : name && email ? email : "";
+  const primaryLine = profile === undefined ? "…" : name || email || "Account";
+  const secondaryLine = profile === undefined ? "" : name && email ? email : "";
 
   return (
     <Popover>

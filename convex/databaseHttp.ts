@@ -23,7 +23,11 @@ function withCors(request: Request, res: Response): Response {
   }
   headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
+  });
 }
 
 export const databaseAgentOptions = httpAction(async (_ctx, request) => {
@@ -70,13 +74,10 @@ export const databaseAgentPost = httpAction(async (ctx, request) => {
     console.error("[convex database-agent] Error:", e);
     return withCors(
       request,
-      new Response(
-        JSON.stringify({ error: "Database agent request failed" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
-      ),
+      new Response(JSON.stringify({ error: "Database agent request failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }),
     );
   }
 });

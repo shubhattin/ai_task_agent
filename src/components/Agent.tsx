@@ -659,8 +659,7 @@ function deriveChatTitle(messages: UIMessage[]): string {
   const first = messages.find((m) => m.role === "user");
   if (!first) return "New chat";
   const textPart = first.parts?.find((p) => p.type === "text");
-  const text =
-    textPart && textPart.type === "text" ? textPart.text.trim() : "";
+  const text = textPart && textPart.type === "text" ? textPart.text.trim() : "";
   if (!text) return "New chat";
   return text.length > 80 ? `${text.slice(0, 77)}…` : text;
 }
@@ -1234,7 +1233,9 @@ export default function Agent() {
       <div className="flex-1 min-w-0 flex flex-col p-4 gap-3">
         <div className="flex flex-col gap-2 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <span className={activeConfig.accentColor}>{activeConfig.icon}</span>
+            <span className={activeConfig.accentColor}>
+              {activeConfig.icon}
+            </span>
             <h3 className="text-sm font-semibold text-foreground">
               {activeConfig.label} Agent
             </h3>
@@ -1269,11 +1270,12 @@ export default function Agent() {
               size="sm"
               className="h-8 text-xs"
               onClick={() => {
-                void createChat({ agentTab: activeTab, title: "New chat" }).then(
-                  (id) => {
-                    setSessionIdByTab((s) => ({ ...s, [activeTab]: id }));
-                  },
-                );
+                void createChat({
+                  agentTab: activeTab,
+                  title: "New chat",
+                }).then((id) => {
+                  setSessionIdByTab((s) => ({ ...s, [activeTab]: id }));
+                });
               }}
             >
               New chat

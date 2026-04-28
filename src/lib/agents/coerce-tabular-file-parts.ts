@@ -8,7 +8,11 @@ const TABULAR_MEDIA = new Set([
 
 const MAX_INLINED = 1_200_000;
 
-function isTabularFilePart(part: { type: string; mediaType: string; filename?: string }): boolean {
+function isTabularFilePart(part: {
+  type: string;
+  mediaType: string;
+  filename?: string;
+}): boolean {
   if (part.type !== "file") return false;
   const m = (part.mediaType || "").toLowerCase();
   const name = (part.filename || "").toLowerCase();
@@ -93,7 +97,12 @@ export async function coerceTabularFilePartsToText(
         "url" in part &&
         "mediaType" in part &&
         isTabularFilePart(
-          part as { type: string; mediaType: string; filename?: string; url: string },
+          part as {
+            type: string;
+            mediaType: string;
+            filename?: string;
+            url: string;
+          },
         )
       ) {
         const f = part as { url: string; mediaType: string; filename?: string };
@@ -105,7 +114,13 @@ export async function coerceTabularFilePartsToText(
             text = text.slice(0, MAX_INLINED);
             wasTruncated = true;
           }
-          parts.push(asTextPart(text, filename, wasTruncated) as UIMessage["parts"][number]);
+          parts.push(
+            asTextPart(
+              text,
+              filename,
+              wasTruncated,
+            ) as UIMessage["parts"][number],
+          );
         } catch (e) {
           const err = e instanceof Error ? e.message : String(e);
           parts.push({

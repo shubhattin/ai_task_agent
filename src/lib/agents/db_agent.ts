@@ -7,7 +7,11 @@ import postgres, { type Sql } from "postgres";
 import { toStreamResponse } from "./shared";
 import { createDatabaseToolLoopAgent } from "./database_agent_model";
 import { coerceTabularFilePartsToText } from "./coerce-tabular-file-parts";
-import { assertReadonlySqlInput, MAX_ROWS, STMT_TIMEOUT_MS } from "./sql_readonly";
+import {
+  assertReadonlySqlInput,
+  MAX_ROWS,
+  STMT_TIMEOUT_MS,
+} from "./sql_readonly";
 import {
   DATABASE_CHOICES,
   DATABASE_TARGET_IDS,
@@ -121,7 +125,9 @@ export async function handleDatabaseAgentRequest(
         { status: 503, headers: { "Content-Type": "application/json" } },
       );
     }
-    const forModel = await coerceTabularFilePartsToText(messages as UIMessage[]);
+    const forModel = await coerceTabularFilePartsToText(
+      messages as UIMessage[],
+    );
     const result = await agent.stream({
       messages: await convertToModelMessages(forModel),
     });

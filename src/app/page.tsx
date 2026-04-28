@@ -60,7 +60,7 @@ function GradientText({
 }) {
   return (
     <span
-      className={`bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-sky-400 to-emerald-400 ${className}`}
+      className={`bg-clip-text text-transparent bg-linear-to-r from-violet-400 via-sky-400 to-emerald-400 ${className}`}
     >
       {children}
     </span>
@@ -260,7 +260,7 @@ export default function Home() {
             ].map(({ step, title, description, color, accent }) => (
               <div
                 key={step}
-                className={`flex-1 p-6 rounded-2xl border bg-gradient-to-b ${color} backdrop-blur-sm`}
+                className={`flex-1 p-6 rounded-2xl border bg-linear-to-b ${color} backdrop-blur-sm`}
               >
                 <span className={`text-4xl font-black ${accent} opacity-30`}>
                   {step}

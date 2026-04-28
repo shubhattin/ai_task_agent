@@ -61,4 +61,6 @@ ${AGENT_MARKDOWN_MATH_HINT}`,
   });
 }
 
-export type DatabaseToolLoopAgent = ReturnType<typeof createDatabaseToolLoopAgent>;
+export type DatabaseToolLoopAgent = ReturnType<
+  typeof createDatabaseToolLoopAgent
+>;

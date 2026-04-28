@@ -1,6 +1,6 @@
 import type { UIMessage } from "ai";
 import { convertToModelMessages, streamText } from "ai";
-import { coerceTabularFilePartsToText } from "@/lib/agents/coerce-tabular-file-parts";
+import { coerceTabularFilePartsToText } from "@/lib/agents/coerce_csv";
 import { AGENT_MODEL } from "@/lib/agents/shared";
 
 export const maxDuration = 60;

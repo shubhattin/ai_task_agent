@@ -1,18 +1,18 @@
 import "server-only";
 
-import type { UIMessage } from "ai";
+import type { InferAgentUIMessage, UIMessage } from "ai";
 import { convertToModelMessages, tool } from "ai";
 import postgres, { type Sql } from "postgres";
 import { z } from "zod";
-import { coerceTabularFilePartsToText } from "./coerce-tabular-file-parts";
-import { createDatabaseToolLoopAgent } from "./database_agent_model";
-import { getNameAndDdlForTarget } from "./database_schemas";
+import { coerceTabularFilePartsToText } from "../coerce_csv";
+import { createDatabaseToolLoopAgent } from ".";
+import { getNameAndDdlForTarget } from "./input_schema";
 import {
   DATABASE_CHOICES,
   DATABASE_TARGET_IDS,
   type DatabaseTargetId,
-} from "./database-constants";
-import { toStreamResponse } from "./shared";
+} from "./info";
+import { toStreamResponse } from "../shared";
 import {
   assertReadonlySqlInput,
   MAX_ROWS,
@@ -105,6 +105,8 @@ export function getDatabaseAgent(target: DatabaseTargetId) {
 export type DatabaseToolLoopAgent = NonNullable<
   ReturnType<typeof getDatabaseAgent>
 >;
+
+export type DatabaseAgentUIMessage = InferAgentUIMessage<DatabaseToolLoopAgent>;
 
 const bodySchema = z.object({
   messages: z.array(z.unknown()),

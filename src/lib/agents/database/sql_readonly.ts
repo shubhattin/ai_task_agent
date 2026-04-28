@@ -1,9 +1,6 @@
 export const MAX_ROWS = 500;
 export const STMT_TIMEOUT_MS = 10_000;
 
-/**
- * Heuristic + PostgreSQL enforces the rest via default_transaction_read_only in-session.
- */
 export function assertReadonlySqlInput(sql: string): string {
   const stripped = sql
     .replace(/\/\*[\s\S]*?\*\//g, " ")

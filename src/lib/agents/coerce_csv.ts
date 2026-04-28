@@ -1,3 +1,5 @@
+// there was some issue with csv uploads so using this right trick to convert it to text as a context
+
 import type { UIMessage } from "ai";
 
 const TABULAR_MEDIA = new Set([
@@ -72,12 +74,7 @@ function asTextPart(
   };
 }
 
-/**
- * The OpenAI chat / Responses path used by the AI SDK rejects user **file** parts for
- * `text/csv` (and similar) media types. Inline the contents as a **text** part so the
- * model and code-interpreter can still use the data. Binary Excel should remain as file
- * parts (or be converted on the client separately).
- */
+/** CSV/TSV file parts are rejected by the model path; inline as text for the model and code interpreter. */
 export async function coerceTabularFilePartsToText(
   messages: UIMessage[],
 ): Promise<UIMessage[]> {

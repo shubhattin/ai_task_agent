@@ -1,4 +1,4 @@
-import { dataAgent } from "@/lib/agents/agents";
+import { dataAgent } from "@/lib/agents/data";
 import { handleAgentRequest } from "@/lib/agents/shared";
 
 export const maxDuration = 60;

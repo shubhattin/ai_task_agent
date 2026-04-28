@@ -105,7 +105,7 @@ import {
   DATABASE_CHOICES,
   DATABASE_TARGET_IDS,
   type DatabaseTargetId,
-} from "@/lib/agents/database-constants";
+} from "@/lib/agents/database/info";
 import { getConvexHttpSiteUrl } from "@/lib/convex-site";
 
 // ─── Tab config ────────────────────────────────────────────────────────────────
@@ -178,9 +178,9 @@ const TABS: TabConfig[] = [
  */
 type WebSearchToolOutput = {
   action?:
-    | { type: "search"; query?: string }
-    | { type: "openPage"; url?: string | null }
-    | { type: "findInPage"; url?: string | null; pattern?: string | null };
+  | { type: "search"; query?: string }
+  | { type: "openPage"; url?: string | null }
+  | { type: "findInPage"; url?: string | null; pattern?: string | null };
   sources?: Array<{ type: "url"; url: string } | { type: "api"; name: string }>;
   /** Legacy / alternate shape */
   results?: Array<{ title?: string; url?: string }>;
@@ -432,8 +432,8 @@ function renderToolStepsForChain(
             </pre>
           ) : null}
           {tool.state === "output-available" &&
-          output?.outputs &&
-          output.outputs.length > 0 ? (
+            output?.outputs &&
+            output.outputs.length > 0 ? (
             <div className="space-y-2">
               {output.outputs.map((o, oi) =>
                 o.type === "logs" ? (
@@ -702,13 +702,13 @@ function AgentChat({
         fetch:
           tab.id === "database"
             ? (url, init) => {
-                if (!token) {
-                  return Promise.reject(new Error("Not signed in"));
-                }
-                const h = new Headers(init?.headers);
-                h.set("Authorization", `Bearer ${token}`);
-                return fetch(String(url), { ...init, headers: h });
+              if (!token) {
+                return Promise.reject(new Error("Not signed in"));
               }
+              const h = new Headers(init?.headers);
+              h.set("Authorization", `Bearer ${token}`);
+              return fetch(String(url), { ...init, headers: h });
+            }
             : undefined,
       }),
     [tab.apiPath, tab.id, databaseChatBody, convexHttpBase, token],
@@ -1189,17 +1189,15 @@ export default function Agent() {
               `}
             >
               <span
-                className={`mt-0.5 shrink-0 ${
-                  isActive ? tab.accentColor : "text-muted-foreground"
-                }`}
+                className={`mt-0.5 shrink-0 ${isActive ? tab.accentColor : "text-muted-foreground"
+                  }`}
               >
                 {tab.icon}
               </span>
               <div>
                 <p
-                  className={`text-sm font-medium leading-tight ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
+                  className={`text-sm font-medium leading-tight ${isActive ? "text-foreground" : "text-muted-foreground"
+                    }`}
                 >
                   {tab.label}
                 </p>
@@ -1207,11 +1205,10 @@ export default function Agent() {
                   {tab.capabilities.map((cap) => (
                     <span
                       key={cap}
-                      className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full border ${
-                        isActive
+                      className={`text-[10px] leading-none px-1.5 py-0.5 rounded-full border ${isActive
                           ? "border-primary/30 text-muted-foreground"
                           : "border-border/50 text-muted-foreground/60"
-                      }`}
+                        }`}
                     >
                       {cap}
                     </span>

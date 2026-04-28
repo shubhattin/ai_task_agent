@@ -1,4 +1,4 @@
-import { DATABASE_CHOICES, type DatabaseTargetId } from "./database-constants";
+import { DATABASE_CHOICES, type DatabaseTargetId } from "./info";
 
 export const PSQL_SCHEMA1 = `
 CREATE TYPE "public"."attachment_type" AS ENUM('link', 'youtube_video', 'youtube_playlist', 'youtube_embed');
@@ -150,12 +150,12 @@ CREATE INDEX "rent_data_month_index" ON "rent_data" USING btree ("month");
 `;
 
 export function getNameAndDdlForTarget(id: DatabaseTargetId): {
-  name: string;
-  schemaDdl: string;
+        name: string;
+        schemaDdl: string;
 } {
-  const name = DATABASE_CHOICES[id].name;
-  if (id === "1") {
-    return { name, schemaDdl: PSQL_SCHEMA1 };
-  }
-  return { name, schemaDdl: PSQL_SCHEMA2 };
+        const name = DATABASE_CHOICES[id].name;
+        if (id === "1") {
+                return { name, schemaDdl: PSQL_SCHEMA1 };
+        }
+        return { name, schemaDdl: PSQL_SCHEMA2 };
 }

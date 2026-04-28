@@ -27,6 +27,7 @@
         "embla-carousel-react": "^8.6.0",
         "html-to-pdfmake": "^2.5.33",
         "input-otp": "^1.4.2",
+        "jotai": "^2.19.1",
         "lucide-react": "^1.11.0",
         "marked": "^18.0.2",
         "motion": "^12.38.0",
@@ -1177,6 +1178,8 @@
     "jiti": ["jiti@2.6.1", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ=="],
 
     "jose": ["jose@5.10.0", "", {}, "sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg=="],
+
+    "jotai": ["jotai@2.19.1", "", { "peerDependencies": { "@babel/core": ">=7.0.0", "@babel/template": ">=7.0.0", "@types/react": ">=17.0.0", "react": ">=17.0.0" }, "optionalPeers": ["@babel/core", "@babel/template", "@types/react", "react"] }, "sha512-sqm9lVZiqBHZH8aSRk32DSiZDHY3yUIlulXYn9GQj7/LvoUdYXSMti7ZPJGo+6zjzKFt5a25k/I6iBCi43PJcw=="],
 
     "js-md5": ["js-md5@0.8.3", "", {}, "sha512-qR0HB5uP6wCuRMrWPTrkMaev7MJZwJuuw4fnwAzRgP4J4/F8RwtodOKpGp4XpqsLBFzzgqIO42efFAyz2Et6KQ=="],
 

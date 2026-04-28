@@ -2,7 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import type { UIMessage } from "ai";
 import { convertToModelMessages } from "ai";
 import { z } from "zod";
-import { coerceTabularFilePartsToText } from "../src/lib/agents/coerce-tabular-file-parts";
+import { coerceTabularFilePartsToText } from "../src/lib/agents/coerce_csv";
 import { toStreamResponse } from "../src/lib/agents/shared";
 import { httpAction } from "./_generated/server";
 import { getNeonDatabaseAgentForConvex } from "./neonDatabaseAgent";

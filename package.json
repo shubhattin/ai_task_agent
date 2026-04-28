@@ -36,6 +36,7 @@
     "embla-carousel-react": "^8.6.0",
     "html-to-pdfmake": "^2.5.33",
     "input-otp": "^1.4.2",
+    "jotai": "^2.19.1",
     "lucide-react": "^1.11.0",
     "marked": "^18.0.2",
     "motion": "^12.38.0",

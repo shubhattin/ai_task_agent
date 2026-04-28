@@ -1,17 +1,17 @@
+import { neon } from "@neondatabase/serverless";
 import { tool } from "ai";
 import { z } from "zod";
-import { neon } from "@neondatabase/serverless";
 import { createDatabaseToolLoopAgent } from "../src/lib/agents/database_agent_model";
 import { getNameAndDdlForTarget } from "../src/lib/agents/database_schemas";
+import {
+  DATABASE_CHOICES,
+  type DatabaseTargetId,
+} from "../src/lib/agents/database-constants";
 import {
   assertReadonlySqlInput,
   MAX_ROWS,
   STMT_TIMEOUT_MS,
 } from "../src/lib/agents/sql_readonly";
-import {
-  DATABASE_CHOICES,
-  type DatabaseTargetId,
-} from "../src/lib/agents/database-constants";
 
 const PSQL_URL1 = process.env.DATABASE_URL1;
 const PSQL_URL2 = process.env.DATABASE_URL2;

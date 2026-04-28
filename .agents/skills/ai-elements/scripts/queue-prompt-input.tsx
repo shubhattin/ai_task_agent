@@ -305,7 +305,7 @@ const Example = () => {
         timeoutRef.current = null;
       }, STREAMING_TIMEOUT);
     },
-    [status],
+    [status, stop],
   );
 
   return (

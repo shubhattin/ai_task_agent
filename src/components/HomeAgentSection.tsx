@@ -1,11 +1,11 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { AuthLoading, Authenticated, Unauthenticated } from "convex/react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { FcGoogle } from "react-icons/fc";
 import Agent from "@/components/Agent";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 export function HomeAgentSection() {
   const { signIn } = useAuthActions();

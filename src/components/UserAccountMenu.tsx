@@ -1,17 +1,17 @@
 "use client";
 
+import { api } from "@convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { LogOut } from "lucide-react";
-import { api } from "@convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
+  PopoverDescription,
   PopoverHeader,
   PopoverTitle,
-  PopoverDescription,
   PopoverTrigger,
 } from "@/components/ui/popover";
 
@@ -19,12 +19,16 @@ function initialsFrom(name: string | null, email: string | null) {
   if (name?.trim()) {
     const parts = name.trim().split(/\s+/);
     if (parts.length >= 2) {
-      return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+      const a = parts[0]?.[0];
+      const b = parts[parts.length - 1]?.[0];
+      if (a !== undefined && b !== undefined) {
+        return (a + b).toUpperCase();
+      }
     }
     return name.slice(0, 2).toUpperCase();
   }
   if (email?.trim()) {
-    return email[0]!.toUpperCase();
+    return email[0]?.toUpperCase();
   }
   return "?";
 }

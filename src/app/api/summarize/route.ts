@@ -1,5 +1,5 @@
-import { streamText, convertToModelMessages } from "ai";
 import type { UIMessage } from "ai";
+import { convertToModelMessages, streamText } from "ai";
 import { coerceTabularFilePartsToText } from "@/lib/agents/coerce-tabular-file-parts";
 import { AGENT_MODEL } from "@/lib/agents/shared";
 

@@ -1,4 +1,5 @@
 import { type InferAgentUIMessage, ToolLoopAgent } from "ai";
+import type { DatabaseToolLoopAgent } from "./db_agent";
 import {
   AGENT_INDIAN_LOCALE_HINT,
   AGENT_MARKDOWN_MATH_HINT,
@@ -7,7 +8,6 @@ import {
   codeInterpreterTool,
   webSearchTool,
 } from "./shared";
-import type { DatabaseToolLoopAgent } from "./db_agent";
 
 // ─── Research Agent ────────────────────────────────────────────────────────────
 export const researchAgent = new ToolLoopAgent({
@@ -73,5 +73,5 @@ export type DataAgentUIMessage = InferAgentUIMessage<typeof dataAgent>;
 /** See `getDatabaseAgent` in `db_agent.ts` (server-only). */
 export type DatabaseAgentUIMessage = InferAgentUIMessage<DatabaseToolLoopAgent>;
 
-export { DATABASE_CHOICES, DATABASE_TARGET_IDS } from "./database-constants";
 export type { DatabaseTargetId } from "./database-constants";
+export { DATABASE_CHOICES, DATABASE_TARGET_IDS } from "./database-constants";

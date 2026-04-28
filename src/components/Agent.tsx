@@ -1,48 +1,33 @@
 "use client";
 
+import { useChat, useCompletion } from "@ai-sdk/react";
+import { api } from "@convex/_generated/api";
+import type { Doc as AgentChatDoc, Id } from "@convex/_generated/dataModel";
+import { useAuthToken } from "@convex-dev/auth/react";
+import type { UIMessage } from "ai";
+import { DefaultChatTransport } from "ai";
+import { useMutation, useQuery } from "convex/react";
+// ─── Icons ─────────────────────────────────────────────────────────────────────
 import {
-  useState,
+  BarChart3Icon,
+  CopyIcon,
+  DatabaseIcon,
+  DownloadIcon,
+  GlobeIcon,
+  RefreshCcwIcon,
+  SearchIcon,
+  SparklesIcon,
+  TerminalIcon,
+} from "lucide-react";
+import {
   Fragment,
   useEffect,
-  useRef,
   useMemo,
   useReducer,
+  useRef,
+  useState,
 } from "react";
-import { useChat, useCompletion } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import type { UIMessage } from "ai";
 import { toast } from "sonner";
-
-// ─── AI Elements ───────────────────────────────────────────────────────────────
-import {
-  Conversation,
-  ConversationContent,
-  ConversationScrollButton,
-  ConversationEmptyState,
-} from "@/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-  MessageActions,
-  MessageAction,
-} from "@/components/ai-elements/message";
-import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputHeader,
-  PromptInputFooter,
-  PromptInputTextarea,
-  PromptInputSubmit,
-  PromptInputTools,
-  PromptInputButton,
-  PromptInputActionMenu,
-  PromptInputActionMenuTrigger,
-  PromptInputActionMenuContent,
-  PromptInputActionAddAttachments,
-  usePromptInputAttachments,
-  type PromptInputMessage,
-} from "@/components/ai-elements/prompt-input";
 import {
   Attachment,
   AttachmentPreview,
@@ -51,13 +36,43 @@ import {
 } from "@/components/ai-elements/attachments";
 import {
   ChainOfThought,
-  ChainOfThoughtHeader,
   ChainOfThoughtContent,
-  ChainOfThoughtStep,
-  ChainOfThoughtSearchResults,
-  ChainOfThoughtSearchResult,
+  ChainOfThoughtHeader,
   ChainOfThoughtImage,
+  ChainOfThoughtSearchResult,
+  ChainOfThoughtSearchResults,
+  ChainOfThoughtStep,
 } from "@/components/ai-elements/chain-of-thought";
+// ─── AI Elements ───────────────────────────────────────────────────────────────
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputActionAddAttachments,
+  PromptInputActionMenu,
+  PromptInputActionMenuContent,
+  PromptInputActionMenuTrigger,
+  PromptInputBody,
+  PromptInputButton,
+  PromptInputFooter,
+  PromptInputHeader,
+  type PromptInputMessage,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+  usePromptInputAttachments,
+} from "@/components/ai-elements/prompt-input";
 import {
   Reasoning,
   ReasoningContent,
@@ -69,6 +84,8 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
+import { UserAccountMenu } from "@/components/UserAccountMenu";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -76,8 +93,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Spinner } from "@/components/ui/spinner";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -85,31 +100,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserAccountMenu } from "@/components/UserAccountMenu";
+import { Spinner } from "@/components/ui/spinner";
 import {
   DATABASE_CHOICES,
   DATABASE_TARGET_IDS,
   type DatabaseTargetId,
 } from "@/lib/agents/database-constants";
-import { useAuthToken } from "@convex-dev/auth/react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
-import type { Doc as AgentChatDoc, Id } from "@convex/_generated/dataModel";
 import { getConvexHttpSiteUrl } from "@/lib/convex-site";
-
-// ─── Icons ─────────────────────────────────────────────────────────────────────
-import {
-  RefreshCcwIcon,
-  CopyIcon,
-  SearchIcon,
-  DatabaseIcon,
-  BarChart3Icon,
-  GlobeIcon,
-  BrainIcon,
-  SparklesIcon,
-  DownloadIcon,
-  TerminalIcon,
-} from "lucide-react";
 
 // ─── Tab config ────────────────────────────────────────────────────────────────
 
@@ -938,7 +935,7 @@ function AgentChat({
       </Conversation>
 
       {/* ── Prompt Input ── */}
-      <div className="flex-shrink-0 pt-3 border-t border-border/40">
+      <div className="shrink-0 pt-3 border-t border-border/40">
         <PromptInput
           onSubmit={handleSubmit}
           className="w-full"
@@ -988,7 +985,7 @@ function AgentChat({
                   }}
                 >
                   <SelectTrigger
-                    className="h-7 w-[min(20rem,100%)] min-w-0 max-w-sm shrink-0 items-center justify-between gap-2 border-border/50 bg-muted/30 pl-2 pr-1 [&_[data-slot=select-value]]:hidden"
+                    className="h-7 w-[min(20rem,100%)] min-w-0 max-w-sm shrink-0 items-center justify-between gap-2 border-border/50 bg-muted/30 pl-2 pr-1 **:data-[slot=select-value]:hidden"
                     title={`${currentDatabaseChoice.name} — ${currentDatabaseChoice.description}`}
                     aria-label={`${currentDatabaseChoice.name} (read-only). ${currentDatabaseChoice.description}`}
                   >
@@ -1004,7 +1001,7 @@ function AgentChat({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent
-                    className="min-w-[var(--radix-select-trigger-width)] max-w-sm"
+                    className="min-w-(--radix-select-trigger-width) max-w-sm"
                     position="popper"
                     sideOffset={4}
                   >
@@ -1124,12 +1121,12 @@ export default function Agent() {
 
   useEffect(() => {
     seedingEmptyListRef.current = false;
-  }, [activeTab]);
+  }, []);
 
   const createChat = useMutation(api.chats.createChat);
   const list = useQuery(api.chats.listByTab, { agentTab: activeTab });
 
-  const activeConfig = TABS.find((t) => t.id === activeTab)!;
+  const activeConfig = TABS.find((t) => t.id === activeTab);
   const sessionId = sessionIdByTab[activeTab];
   const chatDoc = useQuery(
     api.chats.getOne,
@@ -1142,7 +1139,7 @@ export default function Agent() {
     if (list === undefined) return;
     if (sessionIdByTab[activeTab]) return;
     if (list.length > 0) {
-      setSessionIdByTab((s) => ({ ...s, [activeTab]: list[0]!._id }));
+      setSessionIdByTab((s) => ({ ...s, [activeTab]: list[0]?._id }));
       return;
     }
     if (seedingEmptyListRef.current) return;
@@ -1167,10 +1164,14 @@ export default function Agent() {
 
   const canShowChat = sessionId && chatDoc !== undefined;
 
+  if (activeConfig === undefined) {
+    throw new Error(`Unknown agent tab: ${activeTab}`);
+  }
+
   return (
     <div className="flex h-full min-h-0 rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm overflow-hidden shadow-2xl">
       {/* ── Vertical tab sidebar ── */}
-      <nav className="flex flex-col gap-1 p-2 border-r border-border/50 bg-background/40 w-52 flex-shrink-0">
+      <nav className="flex flex-col gap-1 p-2 border-r border-border/50 bg-background/40 w-52 shrink-0">
         <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
           Agents
         </p>
@@ -1178,6 +1179,7 @@ export default function Agent() {
           const isActive = tab.id === activeTab;
           return (
             <button
+              type="button"
               key={tab.id}
               id={`agent-tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
@@ -1187,7 +1189,7 @@ export default function Agent() {
               `}
             >
               <span
-                className={`mt-0.5 flex-shrink-0 ${
+                className={`mt-0.5 shrink-0 ${
                   isActive ? tab.accentColor : "text-muted-foreground"
                 }`}
               >
@@ -1231,7 +1233,7 @@ export default function Agent() {
 
       {/* ── Chat panel ── */}
       <div className="flex-1 min-w-0 flex flex-col p-4 gap-3">
-        <div className="flex flex-col gap-2 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 shrink-0 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <span className={activeConfig.accentColor}>
               {activeConfig.icon}

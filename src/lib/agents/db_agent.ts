@@ -1,23 +1,23 @@
 import "server-only";
 
-import { tool, convertToModelMessages } from "ai";
 import type { UIMessage } from "ai";
-import { z } from "zod";
+import { convertToModelMessages, tool } from "ai";
 import postgres, { type Sql } from "postgres";
-import { toStreamResponse } from "./shared";
-import { createDatabaseToolLoopAgent } from "./database_agent_model";
+import { z } from "zod";
 import { coerceTabularFilePartsToText } from "./coerce-tabular-file-parts";
-import {
-  assertReadonlySqlInput,
-  MAX_ROWS,
-  STMT_TIMEOUT_MS,
-} from "./sql_readonly";
+import { createDatabaseToolLoopAgent } from "./database_agent_model";
+import { getNameAndDdlForTarget } from "./database_schemas";
 import {
   DATABASE_CHOICES,
   DATABASE_TARGET_IDS,
   type DatabaseTargetId,
 } from "./database-constants";
-import { getNameAndDdlForTarget } from "./database_schemas";
+import { toStreamResponse } from "./shared";
+import {
+  assertReadonlySqlInput,
+  MAX_ROWS,
+  STMT_TIMEOUT_MS,
+} from "./sql_readonly";
 
 const PSQL_URL1 = process.env.DATABASE_URL1;
 const PSQL_URL2 = process.env.DATABASE_URL2;
@@ -41,8 +41,9 @@ const sqlClientCache: Partial<Record<DatabaseTargetId, Sql>> = {};
 
 function getCachedSqlForTarget(id: DatabaseTargetId): Sql {
   const url = id === "1" ? PSQL_URL1 : PSQL_URL2;
-  if (sqlClientCache[id]) {
-    return sqlClientCache[id]!;
+  const cached = sqlClientCache[id];
+  if (cached !== undefined) {
+    return cached;
   }
   const c = getSqlClient(url);
   sqlClientCache[id] = c;

@@ -2,9 +2,10 @@
  * Shared configuration and utilities for all agents.
  * Import from here instead of duplicating across agent files.
  */
-import { stepCountIs, convertToModelMessages } from "ai";
-import type { UIMessage, ToolLoopAgent } from "ai";
+
 import { openai } from "@ai-sdk/openai";
+import type { ToolLoopAgent, UIMessage } from "ai";
+import { convertToModelMessages, stepCountIs } from "ai";
 import { coerceTabularFilePartsToText } from "./coerce-tabular-file-parts";
 
 // ─── Model ──────────────────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ export function toStreamResponse(result: {
  */
 export async function handleAgentRequest(
   req: Request,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: tool map and output shapes vary by agent route
   agent: ToolLoopAgent<never, any, any>,
 ): Promise<Response> {
   try {

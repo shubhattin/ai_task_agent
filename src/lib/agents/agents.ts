@@ -1,4 +1,4 @@
-import { InferAgentUIMessage, ToolLoopAgent } from "ai";
+import { type InferAgentUIMessage, ToolLoopAgent } from "ai";
 import {
   AGENT_INDIAN_LOCALE_HINT,
   AGENT_MARKDOWN_MATH_HINT,

@@ -150,12 +150,12 @@ CREATE INDEX "rent_data_month_index" ON "rent_data" USING btree ("month");
 `;
 
 export function getNameAndDdlForTarget(id: DatabaseTargetId): {
-        name: string;
-        schemaDdl: string;
+  name: string;
+  schemaDdl: string;
 } {
-        const name = DATABASE_CHOICES[id].name;
-        if (id === "1") {
-                return { name, schemaDdl: PSQL_SCHEMA1 };
-        }
-        return { name, schemaDdl: PSQL_SCHEMA2 };
+  const name = DATABASE_CHOICES[id].name;
+  if (id === "1") {
+    return { name, schemaDdl: PSQL_SCHEMA1 };
+  }
+  return { name, schemaDdl: PSQL_SCHEMA2 };
 }

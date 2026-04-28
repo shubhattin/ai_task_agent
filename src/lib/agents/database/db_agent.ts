@@ -5,14 +5,14 @@ import { convertToModelMessages, tool } from "ai";
 import postgres, { type Sql } from "postgres";
 import { z } from "zod";
 import { coerceTabularFilePartsToText } from "../coerce_csv";
+import { toStreamResponse } from "../shared";
 import { createDatabaseToolLoopAgent } from ".";
-import { getNameAndDdlForTarget } from "./input_schema";
 import {
   DATABASE_CHOICES,
   DATABASE_TARGET_IDS,
   type DatabaseTargetId,
 } from "./info";
-import { toStreamResponse } from "../shared";
+import { getNameAndDdlForTarget } from "./input_schema";
 import {
   assertReadonlySqlInput,
   MAX_ROWS,

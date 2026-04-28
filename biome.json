@@ -69,7 +69,7 @@
       }
     },
     {
-      "includes": ["src/components/Agent.tsx"],
+      "includes": ["src/components/Agent.tsx", "src/components/agent_comp/**"],
       "linter": {
         "rules": {
           "performance": {

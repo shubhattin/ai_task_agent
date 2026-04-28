@@ -2,11 +2,11 @@ import { neon } from "@neondatabase/serverless";
 import { tool } from "ai";
 import { z } from "zod";
 import { createDatabaseToolLoopAgent } from "../src/lib/agents/database";
-import { getNameAndDdlForTarget } from "../src/lib/agents/database/input_schema";
 import {
   DATABASE_CHOICES,
   type DatabaseTargetId,
 } from "../src/lib/agents/database/info";
+import { getNameAndDdlForTarget } from "../src/lib/agents/database/input_schema";
 import {
   assertReadonlySqlInput,
   MAX_ROWS,

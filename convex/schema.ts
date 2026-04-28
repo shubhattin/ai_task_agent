@@ -1,9 +1,11 @@
+import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  // auth schema
   ...authTables,
+  // app schema
   agentChats: defineTable({
     userId: v.id("users"),
     agentTab: v.union(

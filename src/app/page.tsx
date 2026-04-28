@@ -1,14 +1,14 @@
-import { HomeAgentSection } from "@/components/HomeAgentSection";
 import {
-  Code2,
-  SearchIcon,
   BarChart3Icon,
+  Code2,
   DatabaseIcon,
-  ZapIcon,
-  ShieldCheckIcon,
   GitBranchIcon,
+  SearchIcon,
+  ShieldCheckIcon,
+  ZapIcon,
 } from "lucide-react";
 import { SiGithub } from "react-icons/si";
+import { HomeAgentSection } from "@/components/HomeAgentSection";
 
 // ─── Feature cards ──────────────────────────────────────────────────────────
 const FEATURES = [
@@ -60,7 +60,7 @@ function GradientText({
 }) {
   return (
     <span
-      className={`bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-sky-400 to-emerald-400 ${className}`}
+      className={`bg-clip-text text-transparent bg-linear-to-r from-violet-400 via-sky-400 to-emerald-400 ${className}`}
     >
       {children}
     </span>
@@ -149,7 +149,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div
+          <section
             className="grid grid-cols-1 sm:grid-cols-3 gap-3"
             aria-label="Core capabilities"
           >
@@ -191,7 +191,7 @@ export default function Home() {
                 </p>
               </div>
             ))}
-          </div>
+          </section>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {FEATURES.map(({ icon, title, description }) => (
@@ -260,7 +260,7 @@ export default function Home() {
             ].map(({ step, title, description, color, accent }) => (
               <div
                 key={step}
-                className={`flex-1 p-6 rounded-2xl border bg-gradient-to-b ${color} backdrop-blur-sm`}
+                className={`flex-1 p-6 rounded-2xl border bg-linear-to-b ${color} backdrop-blur-sm`}
               >
                 <span className={`text-4xl font-black ${accent} opacity-30`}>
                   {step}

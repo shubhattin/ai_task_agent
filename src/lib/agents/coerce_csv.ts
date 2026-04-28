@@ -1,3 +1,5 @@
+// there was some issue with csv uploads so using this right trick to convert it to text as a context
+
 import type { UIMessage } from "ai";
 
 const TABULAR_MEDIA = new Set([
@@ -8,7 +10,11 @@ const TABULAR_MEDIA = new Set([
 
 const MAX_INLINED = 1_200_000;
 
-function isTabularFilePart(part: { type: string; mediaType: string; filename?: string }): boolean {
+function isTabularFilePart(part: {
+  type: string;
+  mediaType: string;
+  filename?: string;
+}): boolean {
   if (part.type !== "file") return false;
   const m = (part.mediaType || "").toLowerCase();
   const name = (part.filename || "").toLowerCase();
@@ -68,12 +74,7 @@ function asTextPart(
   };
 }
 
-/**
- * The OpenAI chat / Responses path used by the AI SDK rejects user **file** parts for
- * `text/csv` (and similar) media types. Inline the contents as a **text** part so the
- * model and code-interpreter can still use the data. Binary Excel should remain as file
- * parts (or be converted on the client separately).
- */
+/** CSV/TSV file parts are rejected by the model path; inline as text for the model and code interpreter. */
 export async function coerceTabularFilePartsToText(
   messages: UIMessage[],
 ): Promise<UIMessage[]> {
@@ -93,7 +94,12 @@ export async function coerceTabularFilePartsToText(
         "url" in part &&
         "mediaType" in part &&
         isTabularFilePart(
-          part as { type: string; mediaType: string; filename?: string; url: string },
+          part as {
+            type: string;
+            mediaType: string;
+            filename?: string;
+            url: string;
+          },
         )
       ) {
         const f = part as { url: string; mediaType: string; filename?: string };
@@ -105,7 +111,13 @@ export async function coerceTabularFilePartsToText(
             text = text.slice(0, MAX_INLINED);
             wasTruncated = true;
           }
-          parts.push(asTextPart(text, filename, wasTruncated) as UIMessage["parts"][number]);
+          parts.push(
+            asTextPart(
+              text,
+              filename,
+              wasTruncated,
+            ) as UIMessage["parts"][number],
+          );
         } catch (e) {
           const err = e instanceof Error ? e.message : String(e);
           parts.push({

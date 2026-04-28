@@ -5,7 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "check": "tsc --noEmit",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "biome:check": "biome check ."
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.53",
@@ -30,6 +36,7 @@
     "embla-carousel-react": "^8.6.0",
     "html-to-pdfmake": "^2.5.33",
     "input-otp": "^1.4.2",
+    "jotai": "^2.19.1",
     "lucide-react": "^1.11.0",
     "marked": "^18.0.2",
     "motion": "^12.38.0",
@@ -58,6 +65,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.13",
     "@tailwindcss/postcss": "^4",
     "@types/html-to-pdfmake": "^2.4.5",
     "@types/node": "^20",

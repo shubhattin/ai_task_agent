@@ -1,10 +1,10 @@
-import { httpAction } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { convertToModelMessages } from "ai";
 import type { UIMessage } from "ai";
+import { convertToModelMessages } from "ai";
 import { z } from "zod";
-import { coerceTabularFilePartsToText } from "../src/lib/agents/coerce-tabular-file-parts";
+import { coerceTabularFilePartsToText } from "../src/lib/agents/coerce_csv";
 import { toStreamResponse } from "../src/lib/agents/shared";
+import { httpAction } from "./_generated/server";
 import { getNeonDatabaseAgentForConvex } from "./neonDatabaseAgent";
 
 const bodySchema = z.object({
@@ -23,7 +23,11 @@ function withCors(request: Request, res: Response): Response {
   }
   headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
+  });
 }
 
 export const databaseAgentOptions = httpAction(async (_ctx, request) => {
@@ -70,13 +74,10 @@ export const databaseAgentPost = httpAction(async (ctx, request) => {
     console.error("[convex database-agent] Error:", e);
     return withCors(
       request,
-      new Response(
-        JSON.stringify({ error: "Database agent request failed" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
-      ),
+      new Response(JSON.stringify({ error: "Database agent request failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }),
     );
   }
 });

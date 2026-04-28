@@ -1,7 +1,3 @@
-/**
- * Client-safe database UI constants (no `postgres` / server-only code).
- * Keep names in sync with the active DB agent config in `db_agent.ts`.
- */
 export const DATABASE_TARGET_IDS = ["1", "2"] as const;
 export type DatabaseTargetId = (typeof DATABASE_TARGET_IDS)[number];
 

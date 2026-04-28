@@ -1,5 +1,5 @@
+import { researchAgent } from "@/lib/agents/research";
 import { handleAgentRequest } from "@/lib/agents/shared";
-import { researchAgent } from "@/lib/agents/agents";
 
 export const maxDuration = 60;
 

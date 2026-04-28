@@ -1,6 +1,6 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
 
 const agentTab = v.union(
   v.literal("research"),
@@ -21,9 +21,7 @@ export const listByTab = query({
         q.eq("userId", userId).eq("agentTab", tab),
       )
       .collect();
-    return rows
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .slice(0, 100);
+    return rows.sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 100);
   },
 });
 

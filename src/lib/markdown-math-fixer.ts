@@ -26,7 +26,7 @@ function convertLatexParenthesisDelimiters(markdown: string): string {
 function closeIncompleteDisplayDoubleDollars(s: string): string {
   const n = (s.match(/\$\$/g) ?? []).length;
   if (n % 2 === 1) {
-    return s + "\n$$";
+    return `${s}\n$$`;
   }
   return s;
 }
@@ -65,7 +65,7 @@ function closeIncompleteSingleDollarIfLatex(s: string): string {
   if (inInline && lastSingleOpen >= 0) {
     const tail = s.slice(lastSingleOpen + 1);
     if (tail.length > 0 && (/\\[a-zA-Z@*]/.test(tail) || /[\^_{]/.test(tail))) {
-      return s + "$";
+      return `${s}$`;
     }
   }
   return s;
@@ -94,15 +94,12 @@ function normalizeAssistantMathDelimitersInner(markdown: string): string {
     },
   );
 
-  t = t.replace(
-    /\[([\s\S]*?)\](?!\()/g,
-    (full, inner: string) => {
-      const body = inner.trim();
-      if (body.length < 2) return full;
-      if (!/\\[a-zA-Z@*]/.test(body)) return full;
-      return `$${body}$`;
-    },
-  );
+  t = t.replace(/\[([\s\S]*?)\](?!\()/g, (full, inner: string) => {
+    const body = inner.trim();
+    if (body.length < 2) return full;
+    if (!/\\[a-zA-Z@*]/.test(body)) return full;
+    return `$${body}$`;
+  });
 
   return t;
 }

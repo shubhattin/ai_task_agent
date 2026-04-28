@@ -6,16 +6,12 @@ import {
   AGENT_STOP_WHEN,
   codeInterpreterTool,
   webSearchTool,
-} from "./shared";
+} from "../shared";
 
-/**
- * Shared ToolLoopAgent for PostgreSQL (Neon on Convex or postgres on Node).
- */
 export function createDatabaseToolLoopAgent(
   name: string,
   schemaDdl: string,
-  // Tool shape from @ai-sdk tool(); kept loose for postgres vs Neon's tool
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: driver-specific sqlQuery tool instance
   sqlQuery: any,
 ) {
   return new ToolLoopAgent({
@@ -61,4 +57,6 @@ ${AGENT_MARKDOWN_MATH_HINT}`,
   });
 }
 
-export type DatabaseToolLoopAgent = ReturnType<typeof createDatabaseToolLoopAgent>;
+export type DatabaseToolLoopAgent = ReturnType<
+  typeof createDatabaseToolLoopAgent
+>;

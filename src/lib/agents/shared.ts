@@ -3,7 +3,7 @@ import type { ToolLoopAgent, UIMessage } from "ai";
 import { convertToModelMessages, stepCountIs } from "ai";
 import { coerceTabularFilePartsToText } from "./coerce_csv";
 
-export const AGENT_MODEL = openai("gpt-5.4-mini");
+export const AGENT_MODEL = openai("gpt-5.4-nano");
 
 export const AGENT_INDIAN_LOCALE_HINT = `**Locale (India):** In all natural-language answers, **money and rent** must be discussed in **Indian Rupees (INR)**: use the **₹** symbol (or "Rs" / "INR" when needed) and **Indian place-value grouping** (e.g. ₹1,25,000; 12.5 **lakh**; 2.1 **crore** when helpful in prose). Do not default to US dollars. For **dates** in explanations, prefer **DD-MM-YYYY** or unambiguous long forms unless the data follows another convention. For **electricity/utility** amounts, use **kWh** and Indian bill phrasing (e.g. "units" of electricity) when relevant. If database or file columns store amounts in a different unit (e.g. **paise**, whole **rupees**), say so and convert or label clearly.`;
 export const AGENT_MARKDOWN_MATH_HINT =

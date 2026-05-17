@@ -30,7 +30,7 @@ export function AgentChat({
   const [text, setText] = useState("");
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
-  const [databaseTarget, setDatabaseTarget] = useState<DatabaseTargetId>("1");
+  const [databaseTarget, setDatabaseTarget] = useState<DatabaseTargetId>("2");
 
   const token = useAuthToken();
   const saveMessagesM = useMutation(api.chats.saveMessages);
@@ -106,6 +106,7 @@ export function AgentChat({
 
   const isStreaming = status === "streaming";
   const isSubmitted = status === "submitted";
+  const databaseTargetLocked = messages.length > 0;
 
   const handleSubmit = (msg: PromptInputMessage) => {
     const hasText = Boolean(msg.text?.trim());
@@ -145,6 +146,7 @@ export function AgentChat({
         isStreaming={isStreaming}
         messages={messages}
         databaseTarget={databaseTarget}
+        databaseTargetLocked={databaseTargetLocked}
         onDatabaseTargetChange={setDatabaseTarget}
         onGetSummaryPdf={async () => {
           setIsSummaryDialogOpen(true);

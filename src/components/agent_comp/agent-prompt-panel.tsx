@@ -42,6 +42,7 @@ export function AgentPromptPanel({
   isStreaming,
   messages,
   databaseTarget,
+  databaseTargetLocked,
   onDatabaseTargetChange,
   onGetSummaryPdf,
 }: {
@@ -53,10 +54,14 @@ export function AgentPromptPanel({
   isStreaming: boolean;
   messages: UIMessage[];
   databaseTarget: DatabaseTargetId;
+  databaseTargetLocked: boolean;
   onDatabaseTargetChange: (id: DatabaseTargetId) => void;
   onGetSummaryPdf: () => void | Promise<void>;
 }) {
   const currentChoice = DATABASE_CHOICES[databaseTarget];
+  const dbSelectTitle = databaseTargetLocked
+    ? `${currentChoice.name}`
+    : `${currentChoice.name} — ${currentChoice.description}`;
 
   return (
     <div className="shrink-0 pt-3 border-t border-border/40">
@@ -99,14 +104,15 @@ export function AgentPromptPanel({
             {tab.id === "database" && (
               <Select
                 value={databaseTarget}
+                disabled={databaseTargetLocked}
                 onValueChange={(v) =>
                   onDatabaseTargetChange(v as DatabaseTargetId)
                 }
               >
                 <SelectTrigger
-                  className="h-7 w-[min(20rem,100%)] min-w-0 max-w-sm shrink-0 items-center justify-between gap-2 border-border/50 bg-muted/30 pl-2 pr-1 **:data-[slot=select-value]:hidden"
-                  title={`${currentChoice.name} — ${currentChoice.description}`}
-                  aria-label={`${currentChoice.name} (read-only). ${currentChoice.description}`}
+                  className="h-7 w-[min(20rem,100%)] min-w-0 max-w-sm shrink-0 items-center justify-between gap-2 border-border/50 bg-muted/30 pl-2 pr-1 **:data-[slot=select-value]:hidden disabled:opacity-70"
+                  title={dbSelectTitle}
+                  aria-label={`${currentChoice.name}. ${dbSelectTitle}`}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
                     <DatabaseIcon

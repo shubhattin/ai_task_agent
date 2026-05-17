@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { AgentChat } from "./agent-chat";
+import { isMessagesJsonEmpty } from "./chat-utils";
 import { TABS } from "./tab-config";
 import type { AgentTabId } from "./types";
 
@@ -108,6 +109,7 @@ export default function Agent() {
   };
 
   const canDeleteCurrentChat = Boolean(sessionId && list?.length);
+  const isCurrentChatEmpty = isMessagesJsonEmpty(chatDoc?.messagesJson);
 
   return (
     <div className="flex h-full min-h-0 rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm overflow-hidden shadow-2xl">
@@ -210,7 +212,14 @@ export default function Agent() {
               variant="outline"
               size="sm"
               className="h-8 text-xs"
+              disabled={isCurrentChatEmpty}
+              title={
+                isCurrentChatEmpty
+                  ? "This chat has no messages yet"
+                  : "Start a fresh conversation"
+              }
               onClick={() => {
+                if (isCurrentChatEmpty) return;
                 void createChat({
                   agentTab: activeTab,
                   title: "New chat",

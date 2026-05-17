@@ -7,7 +7,7 @@ import { useAuthToken } from "@convex-dev/auth/react";
 import type { UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 import { useMutation } from "convex/react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import type { DatabaseTargetId } from "@/lib/agents/database/info";
 import { getConvexHttpSiteUrl } from "@/lib/convex-site";
@@ -30,19 +30,14 @@ export function AgentChat({
   const [text, setText] = useState("");
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
-  const [databaseTarget, setDatabaseTarget] = useState<DatabaseTargetId>("2");
+  const [databaseTarget, setDatabaseTarget] = useState<DatabaseTargetId>("1");
 
   const token = useAuthToken();
   const saveMessagesM = useMutation(api.chats.saveMessages);
 
-  const databaseChatBody = useMemo(
-    () => ({
-      get database(): DatabaseTargetId {
-        return databaseTarget;
-      },
-    }),
-    [databaseTarget],
-  );
+  /** useChat only rebuilds its Chat client when `id` changes, so the transport instance must read the latest DB choice per request (see body callback + ref). */
+  const databaseTargetRef = useRef<DatabaseTargetId>(databaseTarget);
+  databaseTargetRef.current = databaseTarget;
 
   const convexHttpBase = getConvexHttpSiteUrl();
 
@@ -53,7 +48,10 @@ export function AgentChat({
           tab.id === "database" && convexHttpBase
             ? `${convexHttpBase}/api/database`
             : tab.apiPath,
-        body: tab.id === "database" ? databaseChatBody : undefined,
+        body:
+          tab.id === "database"
+            ? () => ({ database: databaseTargetRef.current })
+            : undefined,
         fetch:
           tab.id === "database"
             ? (url, init) => {
@@ -66,7 +64,7 @@ export function AgentChat({
               }
             : undefined,
       }),
-    [tab.apiPath, tab.id, databaseChatBody, convexHttpBase, token],
+    [tab.apiPath, tab.id, convexHttpBase, token],
   );
 
   const { messages, sendMessage, status, regenerate } = useChat({

@@ -1,25 +1,19 @@
-"use client";
-
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
+import { getConvexUrl } from "@/lib/convex-env";
 
 /**
- * `ConvexReactClient` throws if the address is empty. During `next build`, CI often has no
- * `NEXT_PUBLIC_CONVEX_URL`; use a placeholder so prerender (e.g. `/_not-found`) succeeds.
- * Set `NEXT_PUBLIC_CONVEX_URL` in the hosting build env (and `.env.local` locally) so
- * production points at your real deployment.
+ * `ConvexReactClient` throws if the address is empty. During production builds,
+ * CI often has no `VITE_CONVEX_URL`; use a placeholder so prerender succeeds.
+ * Set `VITE_CONVEX_URL` in the hosting build env (and `.env.local` locally) so
+ * production points at your real deployment. `npx convex dev` writes this for Vite.
  */
-const address =
-  process.env.NEXT_PUBLIC_CONVEX_URL?.trim() ||
-  "https://build-placeholder.convex.cloud";
+const address = getConvexUrl();
 
-if (
-  process.env.NODE_ENV === "development" &&
-  !process.env.NEXT_PUBLIC_CONVEX_URL?.trim()
-) {
+if (import.meta.env.DEV && !import.meta.env.VITE_CONVEX_URL?.trim()) {
   console.warn(
-    "[Convex] NEXT_PUBLIC_CONVEX_URL is not set; add it to .env.local (Convex dashboard).",
+    "[Convex] VITE_CONVEX_URL is not set; add it to .env.local (Convex dashboard).",
   );
 }
 

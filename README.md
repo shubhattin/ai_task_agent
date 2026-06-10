@@ -1,6 +1,6 @@
 # Passad AI (`ai_task_agent`)
 
-**Passad AI** is a [Next.js](https://nextjs.org) app for running multi-step AI agents: a landing page in [`src/app/page.tsx`](src/app/page.tsx) (hero, feature sections, and **how it works**) plus an embedded **agent interface** for chat.
+**Passad AI** is a [TanStack Start](https://tanstack.com/start) app for running multi-step AI agents: a landing page in [`src/app/index.tsx`](src/app/index.tsx) (hero, feature sections, and **how it works**) plus an embedded **agent interface** for chat.
 
 ## What it does
 
@@ -22,12 +22,15 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). Configure Convex, OAuth, and any model/API env vars for your deployment as in your own setup (this repo may not include `.env` files).
 
+Convex writes `VITE_CONVEX_URL` to `.env.local` when you run `npx convex dev`.
+
 ## Project layout (short)
 
 | Area | Role |
 |------|------|
-| `src/app/page.tsx` | Home layout: hero, `HomeAgentSection`, features, “how it works” |
+| `src/app/index.tsx` | Home layout: hero, `HomeAgentSection`, features, “how it works” |
+| `src/app/api/*.ts` | Server routes for research, data, and summarize agents |
 | `src/components/Agent.tsx` | Tabbed agent UI (research / data / database) |
-| `convex/` | Auth, chat persistence, HTTP routes for agents |
+| `convex/` | Auth, chat persistence, HTTP routes for database agent |
 
 **Production build:** `npm run build` then `npm start`.

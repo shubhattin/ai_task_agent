@@ -15,9 +15,6 @@ export default defineConfig({
     tailwindcss(),
     tanstackStart({
       srcDirectory: "src",
-      router: {
-        routesDirectory: "app",
-      },
     }),
     viteReact(),
     nitro(),

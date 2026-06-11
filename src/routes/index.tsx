@@ -1,3 +1,4 @@
+import { createFileRoute } from "@tanstack/react-router";
 import {
   BarChart3Icon,
   Code2,
@@ -10,7 +11,10 @@ import {
 import { SiGithub } from "react-icons/si";
 import { HomeAgentSection } from "@/components/HomeAgentSection";
 
-// ─── Feature cards ──────────────────────────────────────────────────────────
+export const Route = createFileRoute("/")({
+  component: Home,
+});
+
 const FEATURES = [
   {
     icon: <SearchIcon className="size-5 text-violet-400" />,
@@ -50,7 +54,6 @@ const FEATURES = [
   },
 ];
 
-// ─── Gradient text helper ────────────────────────────────────────────────────
 function GradientText({
   children,
   className = "",
@@ -67,11 +70,9 @@ function GradientText({
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
-export default function Home() {
+function Home() {
   return (
     <main className="relative flex flex-col min-h-screen bg-background overflow-x-hidden">
-      {/* Background glow blobs */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 overflow-hidden"
@@ -82,14 +83,7 @@ export default function Home() {
       </div>
 
       <div className="relative z-10 flex flex-col flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12 gap-16">
-        {/* ── Hero ─────────────────────────────────────────────────────────── */}
         <section className="text-center flex flex-col items-center gap-6">
-          {/* Badge */}
-          {/* <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/60 bg-muted/30 text-xs text-muted-foreground backdrop-blur-sm">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Powered by GPT-5.4 &middot; Vercel AI SDK &middot; Multi-Agent
-          </div> */}
-
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight max-w-4xl">
             <GradientText>Passad AI</GradientText> : your agent for complex work
           </h1>
@@ -100,7 +94,6 @@ export default function Home() {
             observability over reasoning and tool calls.
           </p>
 
-          {/* Stat chips */}
           <div className="flex flex-wrap justify-center gap-3 mt-2">
             {[
               {
@@ -127,10 +120,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Agent Chat Box ────────────────────────────────────────────────── */}
         <HomeAgentSection />
 
-        {/* ── Features grid ────────────────────────────────────────────────── */}
         <section
           aria-labelledby="features-heading"
           className="flex flex-col gap-8"
@@ -215,7 +206,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── How it works ─────────────────────────────────────────────────── */}
         <section
           aria-labelledby="how-heading"
           className="flex flex-col gap-8 pb-8"

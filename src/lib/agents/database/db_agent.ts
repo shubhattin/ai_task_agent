@@ -1,5 +1,3 @@
-import "server-only";
-
 import type { InferAgentUIMessage, UIMessage } from "ai";
 import { convertToModelMessages, tool } from "ai";
 import postgres, { type Sql } from "postgres";
